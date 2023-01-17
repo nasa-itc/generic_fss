@@ -155,7 +155,7 @@ int32 GENERIC_FSS_AppInit(void)
     /*
     ** Create the Software Bus command pipe 
     */
-    status = CFE_SB_CreatePipe(&GENERIC_FSS_AppData.CmdPipe, GENERIC_FSS_PIPE_DEPTH, "GENERIC_FSS_CMD_PIPE");
+    status = CFE_SB_CreatePipe(&GENERIC_FSS_AppData.CmdPipe, GENERIC_FSS_PIPE_DEPTH, "FSS_CMD_PIPE");
     if (status != CFE_SUCCESS)
     {
         CFE_EVS_SendEvent(GENERIC_FSS_PIPE_ERR_EID, CFE_EVS_ERROR,

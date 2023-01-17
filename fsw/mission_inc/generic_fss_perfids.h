@@ -16,7 +16,7 @@
 ** id conflict with other apps.  Performance IDs are used for cFE performance
 ** metrics.
 */
-#define GENERIC_FSS_PERF_ID          500
-#define GENERIC_FSS_DEVICE_PERF_ID   501
+#define GENERIC_FSS_PERF_ID          510
+#define GENERIC_FSS_DEVICE_PERF_ID   511
 
 #endif /* _GENERIC_FSS_PERFIDS_H_ */
