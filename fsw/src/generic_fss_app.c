@@ -401,10 +401,12 @@ void GENERIC_FSS_ProcessTelemetryRequest(void)
     switch (CommandCode)
     {
         case GENERIC_FSS_REQ_HK_TLM:
+            GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
             GENERIC_FSS_ReportHousekeeping();
             break;
 
         case GENERIC_FSS_REQ_DATA_TLM:
+            GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
             GENERIC_FSS_ReportDeviceTelemetry();
             break;
 
@@ -587,7 +589,7 @@ int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length)
 
     if (expected_length == actual_length)
     {
-        /* Increment the command counter upon receipt of an invalid command */
+        /* Increment the command counter upon receipt of a valid command */
         GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
     }
     else
