@@ -39,11 +39,11 @@ namespace Nos3
 
     private:
         /* Private helper methods */
-        void create_generic_fss_hk(std::vector<uint8_t>& out_data); 
         void create_generic_fss_data(std::vector<uint8_t>& out_data); 
         void uart_read_callback(const uint8_t *buf, size_t len); /* Handle data the hardware receives from its protocol bus */
         void command_callback(NosEngine::Common::Message msg); /* Handle backdoor commands and time tick to the simulator */
-
+        void double_to_4bytes_little_endian(double in, uint8_t out[4]);
+        uint8_t compute_checksum(std::vector<uint8_t>& in, int starting_byte, int number_of_bytes);
         /* Private data members */
         std::unique_ptr<NosEngine::Uart::Uart>              _uart_connection; /* TODO: Change if your protocol bus is different (e.g. SPI, I2C, etc.) */
         std::unique_ptr<NosEngine::Client::Bus>             _time_bus; /* Standard */
@@ -52,9 +52,6 @@ namespace Nos3
 
         /* Internal state data */
         std::uint8_t                                        _enabled;
-        std::uint32_t                                       _count;
-        std::uint32_t                                       _config;
-        std::uint32_t                                       _status;
     };
 }
 

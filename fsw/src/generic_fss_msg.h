@@ -81,7 +81,6 @@ typedef struct
     ** TODO: Edit and add specific telemetry values to this struct
     */
     uint8   DeviceEnabled;
-    GENERIC_FSS_Device_HK_tlm_t DeviceHK;
 
 } OS_PACK GENERIC_FSS_Hk_tlm_t;
 #define GENERIC_FSS_HK_TLM_LNGTH sizeof ( GENERIC_FSS_Hk_tlm_t )

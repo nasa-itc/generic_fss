@@ -223,9 +223,6 @@ int32 GENERIC_FSS_AppInit(void)
     ** Note that counters are excluded as they were reset in the previous code block
     */
     GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
-    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceHK.DeviceCounter = 0;
-    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceHK.DeviceConfig = 0;
-    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceHK.DeviceStatus = 0;
 
     /* 
      ** Send an information event that the app has initialized. 
@@ -350,28 +347,6 @@ void GENERIC_FSS_ProcessGroundCommand(void)
             break;
 
         /*
-        ** TODO: Edit and add more command codes as appropriate for the application
-        ** Set Configuration Command
-        ** Note that this is an example of a command that has additional arguments
-        */
-        case GENERIC_FSS_CONFIG_CC:
-            if (GENERIC_FSS_VerifyCmdLength(GENERIC_FSS_AppData.MsgPtr, sizeof(GENERIC_FSS_Config_cmd_t)) == OS_SUCCESS)
-            {
-                CFE_EVS_SendEvent(GENERIC_FSS_CMD_CONFIG_INF_EID, CFE_EVS_INFORMATION, "GENERIC_FSS: Configuration command received");
-                /* Command device to send HK */
-                status = GENERIC_FSS_CommandDevice(GENERIC_FSS_AppData.Generic_fssUart.handle, GENERIC_FSS_DEVICE_CFG_CMD, ((GENERIC_FSS_Config_cmd_t*) GENERIC_FSS_AppData.MsgPtr)->DeviceCfg);
-                if (status == OS_SUCCESS)
-                {
-                    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
-                }
-                else
-                {
-                    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-                }
-            }
-            break;
-
-        /*
         ** Invalid Command Codes
         */
         default:
@@ -430,23 +405,6 @@ void GENERIC_FSS_ProcessTelemetryRequest(void)
 void GENERIC_FSS_ReportHousekeeping(void)
 {
     int32 status = OS_SUCCESS;
-
-    /* Check that device is enabled */
-    if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
-    {
-        status = GENERIC_FSS_RequestHK(GENERIC_FSS_AppData.Generic_fssUart.handle, (GENERIC_FSS_Device_HK_tlm_t*) &GENERIC_FSS_AppData.HkTelemetryPkt.DeviceHK);
-        if (status == OS_SUCCESS)
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
-        }
-        else
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_REQ_HK_ERR_EID, CFE_EVS_ERROR, 
-                    "GENERIC_FSS: Request device HK reported error %d", status);
-        }
-    }
-    /* Intentionally do not report errors if disabled */
 
     /* Time stamp and publish housekeeping telemetry */
     CFE_SB_TimeStampMsg((CFE_SB_Msg_t *) &GENERIC_FSS_AppData.HkTelemetryPkt);

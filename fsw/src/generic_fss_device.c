@@ -58,6 +58,17 @@ int32_t GENERIC_FSS_ReadData(int32_t handle, uint8_t* read_data, uint8_t data_le
 }
 
 
+uint8_t compute_checksum(uint8_t in[], int starting_byte, int number_of_bytes)
+{
+    uint32_t sum = 0;
+    uint8_t checksum;
+    for (int i = starting_byte; i < starting_byte + number_of_bytes; i++) {
+        sum += in[i];
+    }
+    checksum = (uint8_t)(sum & 0x000000FF);
+    return checksum;
+}
+
 /* 
 ** Generic command to device
 ** Note that confirming the echoed response is specific to this implementation
@@ -67,20 +78,18 @@ int32_t GENERIC_FSS_CommandDevice(int32_t handle, uint8_t cmd_code, uint32_t pay
     int32_t status = OS_SUCCESS;
     int32_t bytes = 0;
     uint8_t write_data[GENERIC_FSS_DEVICE_CMD_SIZE] = {0};
-    uint8_t read_data[GENERIC_FSS_DEVICE_DATA_SIZE] = {0};
+    uint8_t read_data[GENERIC_FSS_DEVICE_CMD_SIZE] = {0};
 
     payload = CFE_MAKE_BIG32(payload);
 
     /* Prepare command */
     write_data[0] = GENERIC_FSS_DEVICE_HDR_0;
     write_data[1] = GENERIC_FSS_DEVICE_HDR_1;
-    write_data[2] = cmd_code;
-    write_data[3] = payload >> 24;
-    write_data[4] = payload >> 16;
-    write_data[5] = payload >> 8;
-    write_data[6] = payload;
-    write_data[7] = GENERIC_FSS_DEVICE_TRAILER_0;
-    write_data[8] = GENERIC_FSS_DEVICE_TRAILER_1;
+    write_data[2] = GENERIC_FSS_DEVICE_HDR_2;
+    write_data[3] = GENERIC_FSS_DEVICE_HDR_3;
+    write_data[4] = cmd_code;
+    write_data[5] = 0x01;
+    write_data[6] = compute_checksum(write_data, 4, 2);
 
     /* Flush any prior data */
     status = uart_flush(handle);
@@ -129,79 +138,18 @@ int32_t GENERIC_FSS_CommandDevice(int32_t handle, uint8_t cmd_code, uint32_t pay
     return status;
 }
 
-
-/*
-** Request housekeeping command
-*/
-int32_t GENERIC_FSS_RequestHK(int32_t handle, GENERIC_FSS_Device_HK_tlm_t* data)
+float fourbytes_little_endian_to_float(uint8_t bytes[])
 {
-    int32_t status = OS_SUCCESS;
-    uint8_t read_data[GENERIC_FSS_DEVICE_HK_SIZE] = {0};
-
-    /* Command device to send HK */
-    status = GENERIC_FSS_CommandDevice(handle, GENERIC_FSS_DEVICE_REQ_HK_CMD, 0);
-    if (status == OS_SUCCESS)
-    {
-        /* Read HK data */
-        status = GENERIC_FSS_ReadData(handle, read_data, sizeof(read_data));
-        if (status == OS_SUCCESS)
-        {
-            #ifdef GENERIC_FSS_CFG_DEBUG
-                OS_printf("  GENERIC_FSS_RequestHK = ");
-                for (uint32_t i = 0; i < sizeof(read_data); i++)
-                {
-                    OS_printf("%02x", read_data[i]);
-                }
-                OS_printf("\n");
-            #endif
-
-            /* Verify data header and trailer */
-            if ((read_data[0]  == GENERIC_FSS_DEVICE_HDR_0)     && 
-                (read_data[1]  == GENERIC_FSS_DEVICE_HDR_1)     && 
-                (read_data[14] == GENERIC_FSS_DEVICE_TRAILER_0) && 
-                (read_data[15] == GENERIC_FSS_DEVICE_TRAILER_1) )
-            {
-                data->DeviceCounter  = read_data[2] << 24;
-                data->DeviceCounter |= read_data[3] << 16;
-                data->DeviceCounter |= read_data[4] << 8;
-                data->DeviceCounter |= read_data[5];
-
-                data->DeviceConfig  = read_data[6] << 24;
-                data->DeviceConfig |= read_data[7] << 16;
-                data->DeviceConfig |= read_data[8] << 8;
-                data->DeviceConfig |= read_data[9];
-
-                data->DeviceStatus  = read_data[10] << 24;
-                data->DeviceStatus |= read_data[11] << 16;
-                data->DeviceStatus |= read_data[12] << 8;
-                data->DeviceStatus |= read_data[13];
-
-                #ifdef GENERIC_FSS_CFG_DEBUG
-                    OS_printf("  Header  = 0x%02x%02x  \n", read_data[0], read_data[1]);
-                    OS_printf("  Counter = 0x%08x      \n", data->DeviceCounter);
-                    OS_printf("  Config  = 0x%08x      \n", data->DeviceConfig);
-                    OS_printf("  Status  = 0x%08x      \n", data->DeviceStatus);
-                    OS_printf("  Trailer = 0x%02x%02x  \n", read_data[14], read_data[15]);
-                #endif
-            }
-            else
-            {
-                #ifdef GENERIC_FSS_CFG_DEBUG
-                    OS_printf("  GENERIC_FSS_RequestHK: GENERIC_FSS_ReadData reported error %d \n", status);
-                #endif 
-                status = OS_ERROR;
-            }
-        } /* GENERIC_FSS_ReadData */
-    }
-    else
-    {
-        #ifdef GENERIC_FSS_CFG_DEBUG
-            OS_printf("  GENERIC_FSS_RequestHK: GENERIC_FSS_CommandDevice reported error %d \n", status);
-        #endif 
-    }
-    return status;
+    union {float f; uint32_t u;} fu;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    fu.u = ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[1] << 8) | (uint32_t)bytes[0];
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    fu.u = ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint32_t)bytes[2] << 8) | (uint32_t)bytes[3];
+#else
+    #error "__BYTE_ORDER__ is not defined"
+#endif
+    return fu.f;
 }
-
 
 /*
 ** Request data command
@@ -228,33 +176,31 @@ int32_t GENERIC_FSS_RequestData(int32_t handle, GENERIC_FSS_Device_Data_tlm_t* d
                 OS_printf("\n");
             #endif
 
-            /* Verify data header and trailer */
-            if ((read_data[0]  == GENERIC_FSS_DEVICE_HDR_0)     && 
-                (read_data[1]  == GENERIC_FSS_DEVICE_HDR_1)     && 
-                (read_data[12] == GENERIC_FSS_DEVICE_TRAILER_0) && 
-                (read_data[13] == GENERIC_FSS_DEVICE_TRAILER_1) )
+            uint8_t checksum = compute_checksum(read_data, 4, 11);
+            /* Verify data header, command code, length, and checksum */
+            if ((read_data[0]  == GENERIC_FSS_DEVICE_HDR_0) && 
+                (read_data[1]  == GENERIC_FSS_DEVICE_HDR_1) && 
+                (read_data[2]  == GENERIC_FSS_DEVICE_HDR_2) && 
+                (read_data[3]  == GENERIC_FSS_DEVICE_HDR_3) &&
+                (read_data[4]  == 0x01)                     &&
+                (read_data[5]  == 0x0A)                     &&
+                (read_data[15] == checksum))
             {
-                data->DeviceCounter  = read_data[2] << 24;
-                data->DeviceCounter |= read_data[3] << 16;
-                data->DeviceCounter |= read_data[4] << 8;
-                data->DeviceCounter |= read_data[5];
-
-                data->DeviceDataX  = read_data[6] << 8;
-                data->DeviceDataX |= read_data[7];
-
-                data->DeviceDataY  = read_data[8] << 8;
-                data->DeviceDataY |= read_data[9];
+                // alpha
+                data->Alpha = fourbytes_little_endian_to_float(&read_data[6]);
+                // beta
+                data->Beta = fourbytes_little_endian_to_float(&read_data[10]);
+                // error code
+                data->ErrorCode = read_data[14];
                 
-                data->DeviceDataZ  = read_data[10] << 8;
-                data->DeviceDataZ |= read_data[11];
-
                 #ifdef GENERIC_FSS_CFG_DEBUG
-                    OS_printf("  Header  = 0x%02x%02x  \n", read_data[0], read_data[1]);
-                    OS_printf("  Counter = 0x%08x      \n", data->DeviceCounter);
-                    OS_printf("  Data X  = 0x%04x, %d  \n", data->DeviceDataX, data->DeviceDataX);
-                    OS_printf("  Data Y  = 0x%04x, %d  \n", data->DeviceDataY, data->DeviceDataY);
-                    OS_printf("  Data Z  = 0x%04x, %d  \n", data->DeviceDataZ, data->DeviceDataZ);
-                    OS_printf("  Trailer = 0x%02x%02x  \n", read_data[10], read_data[11]);
+                    OS_printf("  Header           = 0x%02x%02x%02x%02x  \n", read_data[0], read_data[1], read_data[2], read_data[3]);
+                    OS_printf("  Command          = 0x%08x              \n", read[4]);
+                    OS_printf("  Length           = 0x%08x              \n", read[5]);
+                    OS_printf("  Checksum         = 0x%08x              \n", read[15]);
+                    OS_printf("  Data alpha       = 0x%04x, %d          \n", data->Alpha, data->Alpha);
+                    OS_printf("  Data beta        = 0x%04x, %d          \n", data->Beta, data->Beta);
+                    OS_printf("  Data error code  = 0x%04x, %d          \n", data->ErrorCode, data->ErrorCode);
                 #endif
             }
         } 

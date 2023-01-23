@@ -6,7 +6,7 @@ namespace Nos3
 
     extern ItcLogger::Logger *sim_logger;
 
-    Generic_fssHardwareModel::Generic_fssHardwareModel(const boost::property_tree::ptree& config) : SimIHardwareModel(config), _enabled(0), _count(0), _config(0), _status(0)
+    Generic_fssHardwareModel::Generic_fssHardwareModel(const boost::property_tree::ptree& config) : SimIHardwareModel(config), _enabled(0)
     {
         /* Get the NOS engine connection string */
         std::string connection_string = config.get("common.nos-connection-string", "tcp://127.0.0.1:12001"); 
@@ -104,22 +104,7 @@ namespace Nos3
         else if (command.compare("DISABLE") == 0) 
         {
             _enabled = GENERIC_FSS_SIM_ERROR;
-            _count = 0;
-            _config = 0;
-            _status = 0;
             response = "Generic_fssHardwareModel::command_callback:  Disabled";
-        }
-        else if (command.substr(0,7).compare("STATUS=") == 0)
-        {
-            try
-            {
-                _status = std::stod(command.substr(7));
-                response = "Generic_fssHardwareModel::command_callback:  Status set";
-            }
-            catch (...)
-            {
-                response = "Generic_fssHardwareModel::command_callback:  Status invalid";
-            }            
         }
         else if (command.compare("STOP") == 0) 
         {
@@ -133,85 +118,76 @@ namespace Nos3
         _command_node->send_reply_message_async(msg, response.size(), response.c_str());
     }
 
-
-    /* Custom function to prepare the Generic_fss HK telemetry */
-    void Generic_fssHardwareModel::create_generic_fss_hk(std::vector<uint8_t>& out_data)
-    {
-        /* Prepare data size */
-        out_data.resize(16, 0x00);
-
-        /* Streaming data header - 0xDEAD */
-        out_data[0] = 0xDE;
-        out_data[1] = 0xAD;
-        
-        /* Sequence count */
-        out_data[2] = (_count >> 24) & 0x000000FF; 
-        out_data[3] = (_count >> 16) & 0x000000FF; 
-        out_data[4] = (_count >>  8) & 0x000000FF; 
-        out_data[5] =  _count & 0x000000FF;
-        
-        /* Configuration */
-        out_data[6] = (_config >> 24) & 0x000000FF; 
-        out_data[7] = (_config >> 16) & 0x000000FF; 
-        out_data[8] = (_config >>  8) & 0x000000FF; 
-        out_data[9] =  _config & 0x000000FF;
-
-        /* Device Status */
-        out_data[10] = (_status >> 24) & 0x000000FF; 
-        out_data[11] = (_status >> 16) & 0x000000FF; 
-        out_data[12] = (_status >>  8) & 0x000000FF; 
-        out_data[13] =  _status & 0x000000FF;
-
-        /* Streaming data trailer - 0xBEEF */
-        out_data[14] = 0xBE;
-        out_data[15] = 0xEF;
-    }
-
-
     /* Custom function to prepare the Generic_fss Data */
     void Generic_fssHardwareModel::create_generic_fss_data(std::vector<uint8_t>& out_data)
     {
+        uint8_t four_bytes[4];
         boost::shared_ptr<Generic_fssDataPoint> data_point = boost::dynamic_pointer_cast<Generic_fssDataPoint>(_generic_fss_dp->get_data_point());
 
         /* Prepare data size */
-        out_data.resize(14, 0x00);
+        out_data.resize(16, 0x00);
 
-        /* Streaming data header - 0xDEAD */
+        /* Streaming data header - 0xDEADBEEF */
         out_data[0] = 0xDE;
         out_data[1] = 0xAD;
-        
-        /* Sequence count */
-        out_data[2] = (_count >> 24) & 0x000000FF; 
-        out_data[3] = (_count >> 16) & 0x000000FF; 
-        out_data[4] = (_count >>  8) & 0x000000FF; 
-        out_data[5] =  _count & 0x000000FF;
-        
-        /* 
-        ** Payload 
-        ** 
-        ** Device is big engian (most significant byte first)
-        ** Assuming data is valid regardless of dynamic / environmental data
-        ** Floating poing numbers are extremely problematic 
-        **   (https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html)
-        ** Most hardware transmits some type of unsigned integer (e.g. from an ADC), so that's what we've done
-        ** Scale each of the x, y, z (which are in the range [-1.0, 1.0]) by 32767, 
-        **   and add 32768 so that the result fits in a uint16
-        */
-        uint16_t x   = (uint16_t)(data_point->get_generic_fss_data_x()*32767.0 + 32768.0);
-        out_data[6]  = (x >> 8) & 0x00FF;
-        out_data[7]  =  x       & 0x00FF;
-        uint16_t y   = (uint16_t)(data_point->get_generic_fss_data_y()*32767.0 + 32768.0);
-        out_data[8]  = (y >> 8) & 0x00FF;
-        out_data[9]  =  y       & 0x00FF;
-        uint16_t z   = (uint16_t)(data_point->get_generic_fss_data_z()*32767.0 + 32768.0);
-        out_data[10] = (z >> 8) & 0x00FF;
-        out_data[11] =  z       & 0x00FF;
+        out_data[2] = 0xBE;
+        out_data[3] = 0xEF;
 
-        /* Streaming data trailer - 0xBEEF */
-        out_data[12] = 0xBE;
-        out_data[13] = 0xEF;
+        out_data[4] = 0x01; // command code
+        out_data[5] = 0x0A; // length
+        
+        // alpha
+        double_to_4bytes_little_endian(data_point->get_generic_fss_alpha(), four_bytes);
+        out_data[6] = four_bytes[0];
+        out_data[7] = four_bytes[1];
+        out_data[8] = four_bytes[2];
+        out_data[9] = four_bytes[3];
+
+        // beta
+        double_to_4bytes_little_endian(data_point->get_generic_fss_beta(), four_bytes);
+        out_data[10] = four_bytes[0];
+        out_data[11] = four_bytes[1];
+        out_data[12] = four_bytes[2];
+        out_data[13] = four_bytes[3];
+
+        // error code
+        out_data[14] = 1; // error
+        if (data_point->get_generic_fss_valid()) out_data[14] = 0; // valid
+
+        // checksum
+        out_data[15] = compute_checksum(out_data, 4, 11);
     }
 
+    uint8_t Generic_fssHardwareModel::compute_checksum(std::vector<uint8_t>& in, int starting_byte, int number_of_bytes)
+    {
+        uint32_t sum = 0;
+        uint8_t checksum;
+        for (int i = starting_byte; i < starting_byte + number_of_bytes; i++) {
+            sum += in[i];
+        }
+        checksum = (uint8_t)(sum & 0x000000FF);
+        return checksum;
+    }
+
+    void Generic_fssHardwareModel::double_to_4bytes_little_endian(double in, uint8_t out[4])
+    {
+        union {float f; uint32_t u;} fu;
+        fu.f = (float)in;
+        uint32_t u = fu.u;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        out[0] = (uint8_t)((u      ) & 0xFF);
+        out[1] = (uint8_t)((u >>  8) & 0xFF);
+        out[2] = (uint8_t)((u >> 16) & 0xFF);
+        out[3] = (uint8_t)((u >> 24) & 0xFF);
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        out[0] = (uint8_t)((u >> 24) & 0xFF);
+        out[1] = (uint8_t)((u >> 16) & 0xFF);
+        out[2] = (uint8_t)((u >>  8) & 0xFF);
+        out[3] = (uint8_t)((u      ) & 0xFF);
+#else
+    #error "__BYTE_ORDER__ is not defined"
+#endif
+    }
 
     /* Protocol callback */
     void Generic_fssHardwareModel::uart_read_callback(const uint8_t *buf, size_t len)
@@ -235,66 +211,32 @@ namespace Nos3
         else
         {
             /* Check if message is incorrect size */
-            if (in_data.size() != 9)
+            if (in_data.size() != 7)
             {
                 sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Invalid command size of %d received!", in_data.size());
                 valid = GENERIC_FSS_SIM_ERROR;
             }
             else
             {
-                /* Check header - 0xDEAD */
-                if ((in_data[0] != 0xDE) || (in_data[1] !=0xAD))
+                /* Check header - 0xDEADBEEF */
+                if ((in_data[0] != 0xDE) || (in_data[1] !=0xAD) || (in_data[2] != 0xBE) || (in_data[3] !=0xEF))
                 {
                     sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Header incorrect!");
                     valid = GENERIC_FSS_SIM_ERROR;
-                }
-                else
-                {
-                    /* Check trailer - 0xBEEF */
-                    if ((in_data[7] != 0xBE) || (in_data[8] !=0xEF))
-                    {
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Trailer incorrect!");
-                        valid = GENERIC_FSS_SIM_ERROR;
-                    }
-                    else
-                    {
-                        /* Increment count as valid command format received */
-                        _count++;
-                    }
                 }
             }
 
             if (valid == GENERIC_FSS_SIM_SUCCESS)
             {   
                 /* Process command */
-                switch (in_data[2])
+                switch (in_data[4])
                 {
-                    case 0:
-                        /* NOOP */
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  NOOP command received!");
-                        break;
-
-                case 1:
-                        /* Request HK */
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Send HK command received!");
-                        create_generic_fss_hk(out_data);
-                        break;
-
-                    case 2:
+                    case 1:
                         /* Request data */
                         sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Send data command received!");
                         create_generic_fss_data(out_data);
                         break;
 
-                    case 3:
-                        /* Configuration */
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Configuration command received!");
-                        _config  = in_data[3] << 24;
-                        _config |= in_data[4] << 16;
-                        _config |= in_data[5] << 8;
-                        _config |= in_data[6];
-                        break;
-                    
                     default:
                         /* Unused command code */
                         valid = GENERIC_FSS_SIM_ERROR;
@@ -307,7 +249,6 @@ namespace Nos3
         /* Increment count and echo command since format valid */
         if (valid == GENERIC_FSS_SIM_SUCCESS)
         {
-            _count++;
             _uart_connection->write(&in_data[0], in_data.size());
 
             /* Send response if existing */
