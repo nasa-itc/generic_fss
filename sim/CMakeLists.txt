@@ -1,7 +1,7 @@
 project(generic_fss_sim)
 
 find_package(ITC_Common REQUIRED QUIET COMPONENTS itc_logger)
-find_package(NOSENGINE REQUIRED QUIET COMPONENTS common transport client uart)
+find_package(NOSENGINE REQUIRED QUIET COMPONENTS common transport client spi)
 
 include_directories(inc
                     ${sim_common_SOURCE_DIR}/inc

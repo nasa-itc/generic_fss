@@ -423,7 +423,7 @@ void GENERIC_FSS_ReportDeviceTelemetry(void)
     /* Check that device is enabled */
     if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
     {
-        status = GENERIC_FSS_RequestData(GENERIC_FSS_AppData.Generic_fssUart.handle, (GENERIC_FSS_Device_Data_tlm_t*) &GENERIC_FSS_AppData.DevicePkt.Generic_fss);
+        status = GENERIC_FSS_RequestData(&GENERIC_FSS_AppData.Generic_fssSpi, (GENERIC_FSS_Device_Data_tlm_t*) &GENERIC_FSS_AppData.DevicePkt.Generic_fss);
         if (status == OS_SUCCESS)
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
@@ -472,14 +472,16 @@ void GENERIC_FSS_Enable(void)
         ** TODO: Make specific to your application depending on protocol in use
         ** Note that other components provide examples for the different protocols available
         */ 
-        GENERIC_FSS_AppData.Generic_fssUart.deviceString = GENERIC_FSS_CFG_STRING;
-        GENERIC_FSS_AppData.Generic_fssUart.handle = GENERIC_FSS_CFG_HANDLE;
-        GENERIC_FSS_AppData.Generic_fssUart.isOpen = PORT_CLOSED;
-        GENERIC_FSS_AppData.Generic_fssUart.baud = GENERIC_FSS_CFG_BAUDRATE_HZ;
-        GENERIC_FSS_AppData.Generic_fssUart.access_option = uart_access_flag_RDWR;
+        GENERIC_FSS_AppData.Generic_fssSpi.deviceString = GENERIC_FSS_CFG_STRING;
+        GENERIC_FSS_AppData.Generic_fssSpi.handle = GENERIC_FSS_CFG_HANDLE;
+        GENERIC_FSS_AppData.Generic_fssSpi.baudrate = GENERIC_FSS_CFG_BAUD;
+        GENERIC_FSS_AppData.Generic_fssSpi.spi_mode = GENERIC_FSS_CFG_SPI_MODE;
+        GENERIC_FSS_AppData.Generic_fssSpi.bits_per_word = GENERIC_FSS_CFG_BITS_PER_WORD;
+        GENERIC_FSS_AppData.Generic_fssSpi.bus = GENERIC_FSS_CFG_BUS;
+        GENERIC_FSS_AppData.Generic_fssSpi.cs = GENERIC_FSS_CFG_CS;
 
         /* Open device specific protocols */
-        status = uart_init_port(&GENERIC_FSS_AppData.Generic_fssUart);
+        status = spi_init_dev(&GENERIC_FSS_AppData.Generic_fssSpi);
         if (status == OS_SUCCESS)
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
@@ -489,7 +491,7 @@ void GENERIC_FSS_Enable(void)
         else
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_UART_INIT_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: UART port initialization error %d", status);
+            CFE_EVS_SendEvent(GENERIC_FSS_UART_INIT_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device initialization error %d", status);
         }
     }
     else
@@ -513,7 +515,7 @@ void GENERIC_FSS_Disable(void)
     if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
     {
         /* Open device specific protocols */
-        status = uart_close_port(GENERIC_FSS_AppData.Generic_fssUart.handle);
+        status = spi_close_device(&GENERIC_FSS_AppData.Generic_fssSpi);
         if (status == OS_SUCCESS)
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
@@ -523,7 +525,7 @@ void GENERIC_FSS_Disable(void)
         else
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_UART_CLOSE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: UART port close error %d", status);
+            CFE_EVS_SendEvent(GENERIC_FSS_UART_CLOSE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device close error %d", status);
         }
     }
     else

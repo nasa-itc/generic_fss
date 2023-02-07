@@ -18,10 +18,14 @@
     /* Notes: 
     **   NOS3 uart requires matching handle and bus number
     */
-    #define GENERIC_FSS_CFG_STRING           "usart_28"
-    #define GENERIC_FSS_CFG_HANDLE           28 
-    #define GENERIC_FSS_CFG_BAUDRATE_HZ      115200
-    #define GENERIC_FSS_CFG_MS_TIMEOUT       50            /* Max 255 */
+    #define GENERIC_FSS_CFG_STRING           "spi_1"
+    #define GENERIC_FSS_CFG_HANDLE           1
+    #define GENERIC_FSS_CFG_DELAY            32       /* SPI transaction delay, in microseconds */
+    #define GENERIC_FSS_CFG_BAUD             1000000
+    #define GENERIC_FSS_CFG_SPI_MODE         1
+    #define GENERIC_FSS_CFG_BITS_PER_WORD    8
+    #define GENERIC_FSS_CFG_BUS              0
+    #define GENERIC_FSS_CFG_CS               1
     /* Note: Debug flag disabled (commented out) by default */
     //#define GENERIC_FSS_CFG_DEBUG
 #endif

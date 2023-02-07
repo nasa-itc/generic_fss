@@ -66,7 +66,7 @@ typedef struct
     ** Device protocol
     ** TODO: Make specific to your application
     */ 
-    uart_info_t Generic_fssUart;             /* Hardware protocol definition */
+    spi_info_t Generic_fssSpi;             /* Hardware protocol definition */
 
 } GENERIC_FSS_AppData_t;
 

@@ -45,9 +45,9 @@ typedef struct
 /*
 ** Prototypes
 */
-int32_t GENERIC_FSS_ReadData(int32_t handle, uint8_t* read_data, uint8_t data_length);
-int32_t GENERIC_FSS_CommandDevice(int32_t handle, uint8_t cmd, uint32_t payload);
-int32_t GENERIC_FSS_RequestData(int32_t handle, GENERIC_FSS_Device_Data_tlm_t* data);
+int32_t GENERIC_FSS_ReadData(spi_info_t *device, uint8_t* write_data, uint8_t* read_data, uint8_t data_length);
+int32_t GENERIC_FSS_CommandDevice(spi_info_t *device, uint8_t cmd);
+int32_t GENERIC_FSS_RequestData(spi_info_t *device, GENERIC_FSS_Device_Data_tlm_t* data);
 
 
 #endif /* _GENERIC_FSS_DEVICE_H_ */

@@ -1,3 +1,4 @@
+#include <generic_fss_data_point.hpp>
 #include <generic_fss_hardware_model.hpp>
 
 namespace Nos3
@@ -16,32 +17,6 @@ namespace Nos3
         std::string dp_name = config.get("simulator.hardware-model.data-provider.type", "GENERIC_FSS_PROVIDER");
         _generic_fss_dp = SimDataProviderFactory::Instance().Create(dp_name, config);
         sim_logger->info("Generic_fssHardwareModel::Generic_fssHardwareModel:  Data provider %s created.", dp_name.c_str());
-
-        /* Get on a protocol bus */
-        /* Note: Initialized defaults in case value not found in config file */
-        std::string bus_name = "usart_29";
-        int node_port = 29;
-        if (config.get_child_optional("simulator.hardware-model.connections")) 
-        {
-            /* Loop through the connections for hardware model */
-            BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, config.get_child("simulator.hardware-model.connections"))
-            {
-                /* v.second is the child tree (v.first is the name of the child) */
-                if (v.second.get("type", "").compare("usart") == 0)
-                {
-                    /* Configuration found */
-                    bus_name = v.second.get("bus-name", bus_name);
-                    node_port = v.second.get("node-port", node_port);
-                    break;
-                }
-            }
-        }
-        _uart_connection.reset(new NosEngine::Uart::Uart(_hub, config.get("simulator.name", "generic_fss_sim"), connection_string, bus_name));
-        _uart_connection->open(node_port);
-        sim_logger->info("Generic_fssHardwareModel::Generic_fssHardwareModel:  Now on UART bus name %s, port %d.", bus_name.c_str(), node_port);
-    
-        /* Configure protocol callback */
-        _uart_connection->set_read_callback(std::bind(&Generic_fssHardwareModel::uart_read_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         /* Get on the command bus*/
         std::string time_bus_name = "command";
@@ -63,6 +38,28 @@ namespace Nos3
         _time_bus.reset(new NosEngine::Client::Bus(_hub, connection_string, time_bus_name));
         sim_logger->info("Generic_fssHardwareModel::Generic_fssHardwareModel:  Now on time bus named %s.", time_bus_name.c_str());
 
+        /* Get on a protocol bus */
+        /* Note: Initialized defaults in case value not found in config file */
+        std::string spi_name = "NULL"; // Initialize to default in case value not found in config file
+        int chip_select = 0;
+        if (config.get_child_optional("simulator.hardware-model.connections")) 
+        {
+            /* Loop through the connections for hardware model */
+            BOOST_FOREACH(const boost::property_tree::ptree::value_type &v, config.get_child("simulator.hardware-model.connections"))
+            {
+                /* v.second is the child tree (v.first is the name of the child) */
+                if (v.second.get("type", "").compare("spi") == 0)
+                {
+                    /* Configuration found */
+                    spi_name = v.second.get("bus-name", spi_name);
+                    chip_select = v.second.get("chip-select", chip_select);
+                    break;
+                }
+            }
+        }
+        _spi = new SpiSlaveConnection(this, chip_select, connection_string, spi_name);
+        sim_logger->info("Generic_fssHardwareModel::Generic_fssHardwareModel:  Now on SPI bus name %s, chip select %d.", spi_name.c_str(), chip_select);
+    
         /* Construction complete */
         sim_logger->info("Generic_fssHardwareModel::Generic_fssHardwareModel:  Construction complete.");
     }
@@ -71,7 +68,8 @@ namespace Nos3
     Generic_fssHardwareModel::~Generic_fssHardwareModel(void)
     {        
         /* Close the protocol bus */
-        _uart_connection->close();
+        delete _spi;
+        _spi = nullptr;
 
         /* Clean up the data provider */
         delete _generic_fss_dp;
@@ -79,7 +77,6 @@ namespace Nos3
 
         /* The bus will clean up the time node */
     }
-
 
     /* Automagically set up by the base class to be called */
     void Generic_fssHardwareModel::command_callback(NosEngine::Common::Message msg)
@@ -94,7 +91,7 @@ namespace Nos3
         boost::to_upper(command);
         if (command.compare("HELP") == 0) 
         {
-            response = "Generic_fssHardwareModel::command_callback: Valid commands are HELP, ENABLE, DISABLE, STATUS=X, or STOP";
+            response = "Generic_fssHardwareModel::command_callback: Valid commands are HELP, ENABLE, DISABLE, or STOP";
         }
         else if (command.compare("ENABLE") == 0) 
         {
@@ -118,6 +115,19 @@ namespace Nos3
         _command_node->send_reply_message_async(msg, response.size(), response.c_str());
     }
 
+    std::vector<uint8_t> Generic_fssHardwareModel::determine_spi_response_for_request(const std::vector<uint8_t>& in_data)
+    {
+        std::vector<uint8_t> out_data;
+        if ((in_data.size() == 7) && 
+            (in_data[0] == 0xDE) && (in_data[1] == 0xAD) && (in_data[2] == 0xBE) && (in_data[3] == 0xEF) &&
+            (in_data[4] == 0x01) && (in_data[5] == 0x01) && (in_data[6] == 0x02)                            ) {
+            out_data.resize(7, 0xFF);
+        } else if (in_data.size() == 16) {
+            create_generic_fss_data(out_data);
+        }
+        return out_data;
+    }
+
     /* Custom function to prepare the Generic_fss Data */
     void Generic_fssHardwareModel::create_generic_fss_data(std::vector<uint8_t>& out_data)
     {
@@ -127,35 +137,43 @@ namespace Nos3
         /* Prepare data size */
         out_data.resize(16, 0x00);
 
-        /* Streaming data header - 0xDEADBEEF */
-        out_data[0] = 0xDE;
-        out_data[1] = 0xAD;
-        out_data[2] = 0xBE;
-        out_data[3] = 0xEF;
+        sim_logger->debug("Generic_fssHardwareModel::create_generic_fss_data:  Creating data, enabled=%d", _enabled);
+        if (_enabled == GENERIC_FSS_SIM_SUCCESS) {
+            bool valid = data_point->get_generic_fss_valid();
+            double alpha = data_point->get_generic_fss_alpha();
+            double beta = data_point->get_generic_fss_beta();
+            sim_logger->debug("Generic_fssHardwareModel::create_generic_fss_data:  data_point data:  valid=%s, alpha=%f, beta=%f", valid?"TRUE ":"FALSE", alpha, beta);
 
-        out_data[4] = 0x01; // command code
-        out_data[5] = 0x0A; // length
-        
-        // alpha
-        double_to_4bytes_little_endian(data_point->get_generic_fss_alpha(), four_bytes);
-        out_data[6] = four_bytes[0];
-        out_data[7] = four_bytes[1];
-        out_data[8] = four_bytes[2];
-        out_data[9] = four_bytes[3];
+            /* Streaming data header - 0xDEADBEEF */
+            out_data[0] = 0xDE;
+            out_data[1] = 0xAD;
+            out_data[2] = 0xBE;
+            out_data[3] = 0xEF;
 
-        // beta
-        double_to_4bytes_little_endian(data_point->get_generic_fss_beta(), four_bytes);
-        out_data[10] = four_bytes[0];
-        out_data[11] = four_bytes[1];
-        out_data[12] = four_bytes[2];
-        out_data[13] = four_bytes[3];
+            out_data[4] = 0x01; // command code
+            out_data[5] = 0x0A; // length
+            
+            // alpha
+            double_to_4bytes_little_endian(alpha, four_bytes);
+            out_data[6] = four_bytes[0];
+            out_data[7] = four_bytes[1];
+            out_data[8] = four_bytes[2];
+            out_data[9] = four_bytes[3];
 
-        // error code
-        out_data[14] = 1; // error
-        if (data_point->get_generic_fss_valid()) out_data[14] = 0; // valid
+            // beta
+            double_to_4bytes_little_endian(beta, four_bytes);
+            out_data[10] = four_bytes[0];
+            out_data[11] = four_bytes[1];
+            out_data[12] = four_bytes[2];
+            out_data[13] = four_bytes[3];
 
-        // checksum
-        out_data[15] = compute_checksum(out_data, 4, 11);
+            // error code
+            out_data[14] = 1; // error
+            if (valid) out_data[14] = 0; // valid
+
+            // checksum
+            out_data[15] = compute_checksum(out_data, 4, 11);
+        }
     }
 
     uint8_t Generic_fssHardwareModel::compute_checksum(std::vector<uint8_t>& in, int starting_byte, int number_of_bytes)
@@ -189,75 +207,29 @@ namespace Nos3
 #endif
     }
 
-    /* Protocol callback */
-    void Generic_fssHardwareModel::uart_read_callback(const uint8_t *buf, size_t len)
+    SpiSlaveConnection::SpiSlaveConnection(Generic_fssHardwareModel* fss,
+        int chip_select, std::string connection_string, std::string bus_name)
+        : NosEngine::Spi::SpiSlave(chip_select, connection_string, bus_name)
     {
-        std::vector<uint8_t> out_data; 
-        std::uint8_t valid = GENERIC_FSS_SIM_SUCCESS;
-        
-        std::uint32_t rcv_config;
+        _fss = fss;
+    }
 
-        /* Retrieve data and log in man readable format */
-        std::vector<uint8_t> in_data(buf, buf + len);
-        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  REQUEST %s",
-            SimIHardwareModel::uint8_vector_to_hex_string(in_data).c_str());
+    size_t SpiSlaveConnection::spi_read(uint8_t *rbuf, size_t rlen) {
+        sim_logger->debug("spi_read: %s", SimIHardwareModel::uint8_vector_to_hex_string(_spi_out_data).c_str()); // log data
 
-        /* Check simulator is enabled */
-        if (_enabled != GENERIC_FSS_SIM_SUCCESS)
-        {
-            sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Generic_fss sim disabled!");
-            valid = GENERIC_FSS_SIM_ERROR;
+        if (_spi_out_data.size() < rlen) rlen = _spi_out_data.size();
+
+        for (int i = 0; i < rlen; i++) {
+            rbuf[i] = _spi_out_data[i];
         }
-        else
-        {
-            /* Check if message is incorrect size */
-            if (in_data.size() != 7)
-            {
-                sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Invalid command size of %d received!", in_data.size());
-                valid = GENERIC_FSS_SIM_ERROR;
-            }
-            else
-            {
-                /* Check header - 0xDEADBEEF */
-                if ((in_data[0] != 0xDE) || (in_data[1] !=0xAD) || (in_data[2] != 0xBE) || (in_data[3] !=0xEF))
-                {
-                    sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Header incorrect!");
-                    valid = GENERIC_FSS_SIM_ERROR;
-                }
-            }
+        return rlen;
+    }
 
-            if (valid == GENERIC_FSS_SIM_SUCCESS)
-            {   
-                /* Process command */
-                switch (in_data[4])
-                {
-                    case 1:
-                        /* Request data */
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Send data command received!");
-                        create_generic_fss_data(out_data);
-                        break;
+    size_t SpiSlaveConnection::spi_write(const uint8_t *wbuf, size_t wlen) {
+        std::vector<uint8_t> in_data(wbuf, wbuf + wlen);
+        sim_logger->debug("spi_write: %s", SimIHardwareModel::uint8_vector_to_hex_string(in_data).c_str()); // log data
+        _spi_out_data = _fss->determine_spi_response_for_request(in_data);
+        return wlen;
 
-                    default:
-                        /* Unused command code */
-                        valid = GENERIC_FSS_SIM_ERROR;
-                        sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  Unused command %d received!", in_data[2]);
-                        break;
-                }
-            }
-        }
-
-        /* Increment count and echo command since format valid */
-        if (valid == GENERIC_FSS_SIM_SUCCESS)
-        {
-            _uart_connection->write(&in_data[0], in_data.size());
-
-            /* Send response if existing */
-            if (out_data.size() > 0)
-            {
-                sim_logger->debug("Generic_fssHardwareModel::uart_read_callback:  REPLY %s",
-                    SimIHardwareModel::uint8_vector_to_hex_string(out_data).c_str());
-                _uart_connection->write(&out_data[0], out_data.size());
-            }
-        }
     }
 }
