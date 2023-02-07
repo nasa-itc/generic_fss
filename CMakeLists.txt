@@ -3,7 +3,6 @@ project(CFS_GENERIC_FSS_APP C)
 
 include(../ComponentSettings.cmake)
 
-include_directories(fsw/public_inc)
 include_directories(fsw/mission_inc)
 include_directories(fsw/platform_inc)
 include_directories(fsw/src)
