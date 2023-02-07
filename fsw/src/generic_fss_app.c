@@ -10,6 +10,12 @@
 ** Include Files
 */
 #include "generic_fss_app.h"
+#include "generic_fss_device.h"
+#include "generic_fss_events.h"
+#include "generic_fss_platform_cfg.h"
+#include "generic_fss_perfids.h"
+#include "generic_fss_msgids.h"
+#include "generic_fss_version.h"
 
 
 /*
@@ -35,19 +41,24 @@ static CFE_EVS_BinFilter_t  GENERIC_FSS_EventFilters[] =
     {GENERIC_FSS_CMD_DISABLE_INF_EID,    0x0000},
     {GENERIC_FSS_DISABLE_INF_EID,        0x0000},
     {GENERIC_FSS_DISABLE_ERR_EID,        0x0000},
-    {GENERIC_FSS_CMD_CONFIG_INF_EID,     0x0000},
     {GENERIC_FSS_CONFIG_INF_EID,         0x0000},
-    {GENERIC_FSS_CONFIG_ERR_EID,         0x0000},
     {GENERIC_FSS_DEVICE_TLM_ERR_EID,     0x0000},
-    {GENERIC_FSS_REQ_HK_ERR_EID,         0x0000},
     {GENERIC_FSS_REQ_DATA_ERR_EID,       0x0000},
-    {GENERIC_FSS_UART_INIT_ERR_EID,      0x0000},
-    {GENERIC_FSS_UART_CLOSE_ERR_EID,     0x0000},
-    {GENERIC_FSS_UART_READ_ERR_EID,      0x0000},
-    {GENERIC_FSS_UART_WRITE_ERR_EID,     0x0000},
-    {GENERIC_FSS_UART_TIMEOUT_ERR_EID,   0x0000},
-    /* TODO: Add additional event IDs (EID) to the table as created */
+    {GENERIC_FSS_SPI_INIT_ERR_EID,       0x0000},
+    {GENERIC_FSS_SPI_CLOSE_ERR_EID,      0x0000},
 };
+
+// Forward declarations
+static int32 GENERIC_FSS_AppInit(void);
+static void  GENERIC_FSS_ProcessCommandPacket(void);
+static void  GENERIC_FSS_ProcessGroundCommand(void);
+static void  GENERIC_FSS_ProcessTelemetryRequest(void);
+static void  GENERIC_FSS_ReportHousekeeping(void);
+static void  GENERIC_FSS_ReportDeviceTelemetry(void);
+static void  GENERIC_FSS_ResetCounters(void);
+static int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length);
+static void  GENERIC_FSS_Enable(void);
+static void  GENERIC_FSS_Disable(void);
 
 
 /*
@@ -134,7 +145,7 @@ void GENERIC_FSS_AppMain(void)
 /* 
 ** Initialize application
 */
-int32 GENERIC_FSS_AppInit(void)
+static int32 GENERIC_FSS_AppInit(void)
 {
     int32 status = OS_SUCCESS;
     
@@ -187,11 +198,6 @@ int32 GENERIC_FSS_AppInit(void)
         return status;
     }
 
-    /*
-    ** TODO: Subscribe to any other messages here
-    */
-
-
     /* 
     ** Initialize the published HK message - this HK message will contain the 
     ** telemetry that has been defined in the GENERIC_FSS_HkTelemetryPkt for this app.
@@ -207,11 +213,6 @@ int32 GENERIC_FSS_AppInit(void)
     CFE_SB_InitMsg(&GENERIC_FSS_AppData.DevicePkt,
                    GENERIC_FSS_DEVICE_TLM_MID,
                    GENERIC_FSS_DEVICE_TLM_LNGTH, TRUE);
-
-    /*
-    ** TODO: Initialize any other messages that this app will publish
-    */
-
 
     /* 
     ** Always reset all counters during application initialization 
@@ -245,7 +246,7 @@ int32 GENERIC_FSS_AppInit(void)
 /* 
 ** Process packets received on the GENERIC_FSS command pipe
 */
-void GENERIC_FSS_ProcessCommandPacket(void)
+static void GENERIC_FSS_ProcessCommandPacket(void)
 {
     CFE_SB_MsgId_t MsgId = CFE_SB_GetMsgId(GENERIC_FSS_AppData.MsgPtr);
     switch (MsgId)
@@ -279,9 +280,8 @@ void GENERIC_FSS_ProcessCommandPacket(void)
 
 /*
 ** Process ground commands
-** TODO: Add additional commands required by the specific component
 */
-void GENERIC_FSS_ProcessGroundCommand(void)
+static void GENERIC_FSS_ProcessGroundCommand(void)
 {
     int32 status = OS_SUCCESS;
 
@@ -362,9 +362,8 @@ void GENERIC_FSS_ProcessGroundCommand(void)
 
 /*
 ** Process Telemetry Request - Triggered in response to a telemetery request
-** TODO: Add additional telemetry required by the specific component
 */
-void GENERIC_FSS_ProcessTelemetryRequest(void)
+static void GENERIC_FSS_ProcessTelemetryRequest(void)
 {
     int32 status = OS_SUCCESS;
 
@@ -402,7 +401,7 @@ void GENERIC_FSS_ProcessTelemetryRequest(void)
 /* 
 ** Report Application Housekeeping
 */
-void GENERIC_FSS_ReportHousekeeping(void)
+static void GENERIC_FSS_ReportHousekeeping(void)
 {
     int32 status = OS_SUCCESS;
 
@@ -416,7 +415,7 @@ void GENERIC_FSS_ReportHousekeeping(void)
 /*
 ** Collect and Report Device Telemetry
 */
-void GENERIC_FSS_ReportDeviceTelemetry(void)
+static void GENERIC_FSS_ReportDeviceTelemetry(void)
 {
     int32 status = OS_SUCCESS;
 
@@ -446,7 +445,7 @@ void GENERIC_FSS_ReportDeviceTelemetry(void)
 /*
 ** Reset all global counter variables
 */
-void GENERIC_FSS_ResetCounters(void)
+static void GENERIC_FSS_ResetCounters(void)
 {
     GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount = 0;
     GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount = 0;
@@ -455,92 +454,10 @@ void GENERIC_FSS_ResetCounters(void)
     return;
 } 
 
-
-/*
-** Enable Component
-** TODO: Edit for your specific component implementation
-*/
-void GENERIC_FSS_Enable(void)
-{
-    int32 status = OS_SUCCESS;
-
-    /* Check that device is disabled */
-    if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_DISABLED)
-    {
-        /*
-        ** Initialize hardware interface data
-        ** TODO: Make specific to your application depending on protocol in use
-        ** Note that other components provide examples for the different protocols available
-        */ 
-        GENERIC_FSS_AppData.Generic_fssSpi.deviceString = GENERIC_FSS_CFG_STRING;
-        GENERIC_FSS_AppData.Generic_fssSpi.handle = GENERIC_FSS_CFG_HANDLE;
-        GENERIC_FSS_AppData.Generic_fssSpi.baudrate = GENERIC_FSS_CFG_BAUD;
-        GENERIC_FSS_AppData.Generic_fssSpi.spi_mode = GENERIC_FSS_CFG_SPI_MODE;
-        GENERIC_FSS_AppData.Generic_fssSpi.bits_per_word = GENERIC_FSS_CFG_BITS_PER_WORD;
-        GENERIC_FSS_AppData.Generic_fssSpi.bus = GENERIC_FSS_CFG_BUS;
-        GENERIC_FSS_AppData.Generic_fssSpi.cs = GENERIC_FSS_CFG_CS;
-
-        /* Open device specific protocols */
-        status = spi_init_dev(&GENERIC_FSS_AppData.Generic_fssSpi);
-        if (status == OS_SUCCESS)
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_ENABLED;
-            CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_INF_EID, CFE_EVS_INFORMATION, "GENERIC_FSS: Device enabled");
-        }
-        else
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_UART_INIT_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device initialization error %d", status);
-        }
-    }
-    else
-    {
-        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: Device enable failed, already enabled");
-    }
-    return;
-}
-
-
-/*
-** Disable Component
-** TODO: Edit for your specific component implementation
-*/
-void GENERIC_FSS_Disable(void)
-{
-    int32 status = OS_SUCCESS;
-
-    /* Check that device is enabled */
-    if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
-    {
-        /* Open device specific protocols */
-        status = spi_close_device(&GENERIC_FSS_AppData.Generic_fssSpi);
-        if (status == OS_SUCCESS)
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
-            CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_INF_EID, CFE_EVS_INFORMATION, "GENERIC_FSS: Device disabled");
-        }
-        else
-        {
-            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_UART_CLOSE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device close error %d", status);
-        }
-    }
-    else
-    {
-        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: Device disable failed, already disabled");
-    }
-    return;
-}
-
-
 /*
 ** Verify command packet length matches expected
 */
-int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length)
+static int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length)
 {     
     int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t msg_id = 0xFFFF;
@@ -568,3 +485,79 @@ int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length)
     }
     return status;
 } 
+
+/*
+** Enable Component
+*/
+static void GENERIC_FSS_Enable(void)
+{
+    int32 status = OS_SUCCESS;
+
+    /* Check that device is disabled */
+    if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_DISABLED)
+    {
+        /*
+        ** Initialize hardware interface data
+        */ 
+        GENERIC_FSS_AppData.Generic_fssSpi.deviceString = GENERIC_FSS_CFG_STRING;
+        GENERIC_FSS_AppData.Generic_fssSpi.handle = GENERIC_FSS_CFG_HANDLE;
+        GENERIC_FSS_AppData.Generic_fssSpi.baudrate = GENERIC_FSS_CFG_BAUD;
+        GENERIC_FSS_AppData.Generic_fssSpi.spi_mode = GENERIC_FSS_CFG_SPI_MODE;
+        GENERIC_FSS_AppData.Generic_fssSpi.bits_per_word = GENERIC_FSS_CFG_BITS_PER_WORD;
+        GENERIC_FSS_AppData.Generic_fssSpi.bus = GENERIC_FSS_CFG_BUS;
+        GENERIC_FSS_AppData.Generic_fssSpi.cs = GENERIC_FSS_CFG_CS;
+
+        /* Open device specific protocols */
+        status = spi_init_dev(&GENERIC_FSS_AppData.Generic_fssSpi);
+        if (status == OS_SUCCESS)
+        {
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_ENABLED;
+            CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_INF_EID, CFE_EVS_INFORMATION, "GENERIC_FSS: Device enabled");
+        }
+        else
+        {
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
+            CFE_EVS_SendEvent(GENERIC_FSS_SPI_INIT_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device initialization error %d", status);
+        }
+    }
+    else
+    {
+        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
+        CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: Device enable failed, already enabled");
+    }
+    return;
+}
+
+
+/*
+** Disable Component
+*/
+static void GENERIC_FSS_Disable(void)
+{
+    int32 status = OS_SUCCESS;
+
+    /* Check that device is enabled */
+    if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
+    {
+        /* Close device specific protocols */
+        status = spi_close_device(&GENERIC_FSS_AppData.Generic_fssSpi);
+        if (status == OS_SUCCESS)
+        {
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
+            CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_INF_EID, CFE_EVS_INFORMATION, "GENERIC_FSS: Device disabled");
+        }
+        else
+        {
+            GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
+            CFE_EVS_SendEvent(GENERIC_FSS_SPI_CLOSE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: SPI device close error %d", status);
+        }
+    }
+    else
+    {
+        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
+        CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_ERR_EID, CFE_EVS_ERROR, "GENERIC_FSS: Device disable failed, already disabled");
+    }
+    return;
+}

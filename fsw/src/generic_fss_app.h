@@ -12,14 +12,8 @@
 ** Include Files
 */
 #include "cfe.h"
-#include "generic_fss_device.h"
-#include "generic_fss_events.h"
-#include "generic_fss_platform_cfg.h"
-#include "generic_fss_perfids.h"
-#include "generic_fss_msg.h"
-#include "generic_fss_msgids.h"
-#include "generic_fss_version.h"
 #include "hwlib.h"
+#include "generic_fss_msg.h"
 
 
 /*
@@ -27,13 +21,11 @@
 */
 #define GENERIC_FSS_PIPE_DEPTH            32
 
-
 /*
 ** Enabled and Disabled Definitions
 */
 #define GENERIC_FSS_DEVICE_DISABLED       0
 #define GENERIC_FSS_DEVICE_ENABLED        1
-
 
 /*
 ** GENERIC_FSS global data structure
@@ -64,7 +56,6 @@ typedef struct
 
     /* 
     ** Device protocol
-    ** TODO: Make specific to your application
     */ 
     spi_info_t Generic_fssSpi;             /* Hardware protocol definition */
 
@@ -86,15 +77,5 @@ extern GENERIC_FSS_AppData_t GENERIC_FSS_AppData; /* GENERIC_FSS App Data */
 **       functions are not called from any other source module.
 */
 void  GENERIC_FSS_AppMain(void);
-int32 GENERIC_FSS_AppInit(void);
-void  GENERIC_FSS_ProcessCommandPacket(void);
-void  GENERIC_FSS_ProcessGroundCommand(void);
-void  GENERIC_FSS_ProcessTelemetryRequest(void);
-void  GENERIC_FSS_ReportHousekeeping(void);
-void  GENERIC_FSS_ReportDeviceTelemetry(void);
-void  GENERIC_FSS_ResetCounters(void);
-void  GENERIC_FSS_Enable(void);
-void  GENERIC_FSS_Disable(void);
-int32 GENERIC_FSS_VerifyCmdLength(CFE_SB_MsgPtr_t msg, uint16 expected_length);
 
 #endif /* _GENERIC_FSS_APP_H_ */

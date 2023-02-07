@@ -1,6 +1,6 @@
 /*******************************************************************************
 ** File:
-**   $Id: generic_fss_perfids.h $
+**   generic_fss_perfids.h
 **
 ** Purpose:
 **  Define GENERIC_FSS Performance IDs

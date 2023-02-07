@@ -1,6 +1,6 @@
 /************************************************************************
 ** File:
-**   $Id: generic_fss_platform_cfg.h  $
+**   generic_fss_platform_cfg.h
 **
 ** Purpose:
 **  Define generic_fss Platform Configuration Parameters
@@ -16,7 +16,7 @@
 */
 #ifndef GENERIC_FSS_CFG
     /* Notes: 
-    **   NOS3 uart requires matching handle and bus number
+    **   NOS3 spi requires matching handle and bus number
     */
     #define GENERIC_FSS_CFG_STRING           "spi_1"
     #define GENERIC_FSS_CFG_HANDLE           1

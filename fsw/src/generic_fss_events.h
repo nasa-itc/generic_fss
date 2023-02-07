@@ -31,22 +31,16 @@
 #define GENERIC_FSS_DISABLE_ERR_EID           18
 
 /* Device specific command event IDs */
-#define GENERIC_FSS_CMD_CONFIG_INF_EID        20
-#define GENERIC_FSS_CONFIG_INF_EID            21
-#define GENERIC_FSS_CONFIG_ERR_EID            22
+#define GENERIC_FSS_CONFIG_INF_EID            20
 
 /* Standard telemetry event IDs */
 #define GENERIC_FSS_DEVICE_TLM_ERR_EID        30
-#define GENERIC_FSS_REQ_HK_ERR_EID            31
 
 /* Device specific telemetry event IDs */
-#define GENERIC_FSS_REQ_DATA_ERR_EID          32
+#define GENERIC_FSS_REQ_DATA_ERR_EID          31
 
 /* Hardware protocol event IDs */
-#define GENERIC_FSS_UART_INIT_ERR_EID         40
-#define GENERIC_FSS_UART_CLOSE_ERR_EID        41
-#define GENERIC_FSS_UART_READ_ERR_EID         42
-#define GENERIC_FSS_UART_WRITE_ERR_EID        43
-#define GENERIC_FSS_UART_TIMEOUT_ERR_EID      44
+#define GENERIC_FSS_SPI_INIT_ERR_EID          40
+#define GENERIC_FSS_SPI_CLOSE_ERR_EID         41
 
 #endif /* _GENERIC_FSS_EVENTS_H_ */

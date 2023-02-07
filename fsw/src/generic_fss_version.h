@@ -1,6 +1,6 @@
 /************************************************************************
 ** File:
-**   $Id: generic_fss_app_version.h  $
+**   generic_fss_app_version.h
 **
 ** Purpose:
 **  The Generic_fss Application header file containing version number
