@@ -40,7 +40,7 @@ namespace Nos3
 
     private:
         /* Private helper methods */
-        void create_generic_fss_data(std::vector<uint8_t>& out_data); 
+        void create_generic_fss_data(); 
         void command_callback(NosEngine::Common::Message msg); /* Handle backdoor commands and time tick to the simulator */
         void double_to_4bytes_little_endian(double in, uint8_t out[4]);
         uint8_t compute_checksum(std::vector<uint8_t>& in, int starting_byte, int number_of_bytes);
@@ -52,6 +52,7 @@ namespace Nos3
 
         /* Internal state data */
         std::uint8_t                                        _enabled;
+        std::vector<uint8_t>                                _queued_data;
     };
 
     class SpiSlaveConnection : public NosEngine::Spi::SpiSlave

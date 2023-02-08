@@ -117,25 +117,31 @@ namespace Nos3
 
     std::vector<uint8_t> Generic_fssHardwareModel::determine_spi_response_for_request(const std::vector<uint8_t>& in_data)
     {
-        std::vector<uint8_t> out_data;
+        // Remember... SPI sends and receives between the master and slave at the same time... so what goes back out depends on computations done based on the last in... not this one
+
+        // Take care of creating out_data from previously queued data
+        std::vector<uint8_t> out_data = _queued_data;
+        out_data.resize(in_data.size(), 0xFF);
+
+        // Create next queued data based on in_data
         if ((in_data.size() == 7) && 
             (in_data[0] == 0xDE) && (in_data[1] == 0xAD) && (in_data[2] == 0xBE) && (in_data[3] == 0xEF) &&
             (in_data[4] == 0x01) && (in_data[5] == 0x01) && (in_data[6] == 0x02)                            ) {
-            out_data.resize(7, 0xFF);
-        } else if (in_data.size() == 16) {
-            create_generic_fss_data(out_data);
+            create_generic_fss_data();
+        } else {
+            _queued_data.resize(0);
         }
         return out_data;
     }
 
     /* Custom function to prepare the Generic_fss Data */
-    void Generic_fssHardwareModel::create_generic_fss_data(std::vector<uint8_t>& out_data)
+    void Generic_fssHardwareModel::create_generic_fss_data()
     {
         uint8_t four_bytes[4];
         boost::shared_ptr<Generic_fssDataPoint> data_point = boost::dynamic_pointer_cast<Generic_fssDataPoint>(_generic_fss_dp->get_data_point());
 
         /* Prepare data size */
-        out_data.resize(16, 0x00);
+        _queued_data.resize(16, 0x00);
 
         sim_logger->debug("Generic_fssHardwareModel::create_generic_fss_data:  Creating data, enabled=%d", _enabled);
         if (_enabled == GENERIC_FSS_SIM_SUCCESS) {
@@ -145,34 +151,34 @@ namespace Nos3
             sim_logger->debug("Generic_fssHardwareModel::create_generic_fss_data:  data_point data:  valid=%s, alpha=%f, beta=%f", valid?"TRUE ":"FALSE", alpha, beta);
 
             /* Streaming data header - 0xDEADBEEF */
-            out_data[0] = 0xDE;
-            out_data[1] = 0xAD;
-            out_data[2] = 0xBE;
-            out_data[3] = 0xEF;
+            _queued_data[0] = 0xDE;
+            _queued_data[1] = 0xAD;
+            _queued_data[2] = 0xBE;
+            _queued_data[3] = 0xEF;
 
-            out_data[4] = 0x01; // command code
-            out_data[5] = 0x0A; // length
+            _queued_data[4] = 0x01; // command code
+            _queued_data[5] = 0x0A; // length
             
             // alpha
             double_to_4bytes_little_endian(alpha, four_bytes);
-            out_data[6] = four_bytes[0];
-            out_data[7] = four_bytes[1];
-            out_data[8] = four_bytes[2];
-            out_data[9] = four_bytes[3];
+            _queued_data[6] = four_bytes[0];
+            _queued_data[7] = four_bytes[1];
+            _queued_data[8] = four_bytes[2];
+            _queued_data[9] = four_bytes[3];
 
             // beta
             double_to_4bytes_little_endian(beta, four_bytes);
-            out_data[10] = four_bytes[0];
-            out_data[11] = four_bytes[1];
-            out_data[12] = four_bytes[2];
-            out_data[13] = four_bytes[3];
+            _queued_data[10] = four_bytes[0];
+            _queued_data[11] = four_bytes[1];
+            _queued_data[12] = four_bytes[2];
+            _queued_data[13] = four_bytes[3];
 
             // error code
-            out_data[14] = 1; // error
-            if (valid) out_data[14] = 0; // valid
+            _queued_data[14] = 1; // error
+            if (valid) _queued_data[14] = 0; // valid
 
             // checksum
-            out_data[15] = compute_checksum(out_data, 4, 11);
+            _queued_data[15] = compute_checksum(_queued_data, 4, 11);
         }
     }
 
