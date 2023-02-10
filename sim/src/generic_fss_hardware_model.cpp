@@ -89,21 +89,21 @@ namespace Nos3
         std::string command = dbf.data;
         std::string response = "Generic_fssHardwareModel::command_callback:  INVALID COMMAND! (Try HELP)";
         boost::to_upper(command);
-        if (command.compare("HELP") == 0) 
+        if (command.compare(0, 4, "HELP") == 0) 
         {
             response = "Generic_fssHardwareModel::command_callback: Valid commands are HELP, ENABLE, DISABLE, or STOP";
         }
-        else if (command.compare("ENABLE") == 0) 
+        else if (command.compare(0, 6, "ENABLE") == 0) 
         {
             _enabled = GENERIC_FSS_SIM_SUCCESS;
             response = "Generic_fssHardwareModel::command_callback:  Enabled";
         }
-        else if (command.compare("DISABLE") == 0) 
+        else if (command.compare(0, 7, "DISABLE") == 0) 
         {
             _enabled = GENERIC_FSS_SIM_ERROR;
             response = "Generic_fssHardwareModel::command_callback:  Disabled";
         }
-        else if (command.compare("STOP") == 0) 
+        else if (command.compare(0, 4, "STOP") == 0) 
         {
             _keep_running = false;
             response = "Generic_fssHardwareModel::command_callback:  Stopping";

@@ -19,7 +19,6 @@
 #define GENERIC_FSS_RESET_COUNTERS_CC       1
 #define GENERIC_FSS_ENABLE_CC               2
 #define GENERIC_FSS_DISABLE_CC              3
-#define GENERIC_FSS_CONFIG_CC               4
 
 /* 
 ** Telemetry Request Command Codes

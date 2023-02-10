@@ -30,9 +30,6 @@
 #define GENERIC_FSS_DISABLE_INF_EID           17
 #define GENERIC_FSS_DISABLE_ERR_EID           18
 
-/* Device specific command event IDs */
-#define GENERIC_FSS_CONFIG_INF_EID            20
-
 /* Standard telemetry event IDs */
 #define GENERIC_FSS_DEVICE_TLM_ERR_EID        30
 
