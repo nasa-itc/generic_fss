@@ -122,33 +122,9 @@ For more information on the format, please refer to the cFE startup script (```*
 Refer to the file [sim/cfg/nos3-fss-simulator.xml](sim/cfg/nos3-fss-simulator.xml) for the default configuration settings.  Note that the block of XML within this file should be placed within the `<simulators></simulators>` section of the main ```nos3-simulator.xml``` configuration file which is read by the ```sim_common code``` and used by the simulator.  For more information, refer to the example configuration file in ```nos3/sims/cfg/nos3-simulator.xml```.
 
 ## 42
-The ```GENERIC_FSS_42_PROVIDER``` simulation data provider depends on receiving data for a fine sun sensor over a TCP/IP socket (specified in the simulator configuration) from the 42 spacecraft simulator.  To provide this data, 42 must be configured with a fine sun sensor block in the 42 spacecraft configuration file (typically named to begin with ```SC_``` but whose name is ultimately specified in the Spacecraft section of the 42 ```Inp_Sim.txt``` file).  This configuration block looks like:
+The ```GENERIC_FSS_42_PROVIDER``` simulation data provider depends on receiving data for a fine sun sensor over a TCP/IP socket (specified in the simulator configuration) from the 42 spacecraft simulator.  To provide this data, 42 must be configured with a fine sun sensor block in the 42 spacecraft configuration file (typically named to begin with ```SC_``` but whose name is ultimately specified in the Spacecraft section of the 42 ```Inp_Sim.txt``` file).  Refer to the file [sim/cfg/SC_fss_NOS3.txt](sim/cfg/SC_fss_NOS3.txt) for what this configuration block should look like.  This block should be placed within the `************************* Fine Sun Sensor *******************************` section of the ```SC_*.xml``` configuration file which is read by 42 for spacecraft information.  For more information, refer to the example 42 spacecraft configuration file in ```nos3/sims/cfg/InOut/SC_NOS3.txt```.
 
-```
-=============================== FSS 0 ===================================
-0.2                           ! Sample Time,sec
-90.0  0.0  0.0  231           ! Mounting Angles (deg), Seq in Body
-Z_AXIS                        ! Boresight Axis X_AXIS, Y_AXIS, or Z_AXIS
-60.0   60.0                   ! X, Y FOV Size, deg
-0.1                           ! Noise Equivalent Angle, deg RMS
-0.5                           ! Quantization, deg
-0                             ! Flex Node Index
-```
-
-In addition, the 42 ```Inp_IPC.txt``` configuration file must specify information about the TCP/IP socket connection to the simulation data provider.  This configuration block looks like:
-
-```
-**********************************  FSS   *******************************
-TX                                      ! IPC Mode (OFF,TX,RX,TXRX,ACS,WRITEFILE,READFILE)
-0                                       ! AC.ID for ACS mode
-"FSS.42"                                ! File name for WRITE or READ
-SERVER                                  ! Socket Role (SERVER,CLIENT,GMSEC_CLIENT)
-localhost      4279                     ! Server Host Name, Port 
-FALSE                                   ! Allow Blocking (i.e. wait on RX)
-FALSE                                   ! Echo to stdout
-1                                       ! Number of TX prefixes
-"SC"                                    ! Prefix 0
-```
+In addition, the 42 ```Inp_IPC.txt``` configuration file must specify information about the TCP/IP socket connection to the simulation data provider.  Refer to the file [sim/cfg/Inp_fss_IPC.txt](sim/cfg/Inp_fss_IPC.txt) for what this configuration block should look like.  This block should be placed in the ```Inp_IPC.txt``` configuration file which is read by 42 for IPC information.  For more information, refer to the example 42 spacecraft configuration file in ```nos3/sims/cfg/InOut/Inp_IPC.txt```.
 
 Important for communication with the simulation provider:
 - The ```IPC Mode``` must be ```TX```
