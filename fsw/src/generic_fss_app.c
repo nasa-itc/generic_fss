@@ -374,12 +374,10 @@ static void GENERIC_FSS_ProcessTelemetryRequest(void)
     switch (CommandCode)
     {
         case GENERIC_FSS_REQ_HK_TLM:
-            GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
             GENERIC_FSS_ReportHousekeeping();
             break;
 
         case GENERIC_FSS_REQ_DATA_TLM:
-            GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
             GENERIC_FSS_ReportDeviceTelemetry();
             break;
 
