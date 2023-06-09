@@ -23,30 +23,6 @@
 */
 GENERIC_FSS_AppData_t GENERIC_FSS_AppData;
 
-static CFE_EVS_BinFilter_t  GENERIC_FSS_EventFilters[] =
-{   /* Event ID    mask */
-    {GENERIC_FSS_RESERVED_EID,           0x0000},
-    {GENERIC_FSS_STARTUP_INF_EID,        0x0000},
-    {GENERIC_FSS_LEN_ERR_EID,            0x0000},
-    {GENERIC_FSS_PIPE_ERR_EID,           0x0000},
-    {GENERIC_FSS_SUB_CMD_ERR_EID,        0x0000},
-    {GENERIC_FSS_SUB_REQ_HK_ERR_EID,     0x0000},
-    {GENERIC_FSS_PROCESS_CMD_ERR_EID,    0x0000},
-    {GENERIC_FSS_CMD_ERR_EID,            0x0000},
-    {GENERIC_FSS_CMD_NOOP_INF_EID,       0x0000},
-    {GENERIC_FSS_CMD_RESET_INF_EID,      0x0000},
-    {GENERIC_FSS_CMD_ENABLE_INF_EID,     0x0000},
-    {GENERIC_FSS_ENABLE_INF_EID,         0x0000},
-    {GENERIC_FSS_ENABLE_ERR_EID,         0x0000},
-    {GENERIC_FSS_CMD_DISABLE_INF_EID,    0x0000},
-    {GENERIC_FSS_DISABLE_INF_EID,        0x0000},
-    {GENERIC_FSS_DISABLE_ERR_EID,        0x0000},
-    {GENERIC_FSS_DEVICE_TLM_ERR_EID,     0x0000},
-    {GENERIC_FSS_REQ_DATA_ERR_EID,       0x0000},
-    {GENERIC_FSS_SPI_INIT_ERR_EID,       0x0000},
-    {GENERIC_FSS_SPI_CLOSE_ERR_EID,      0x0000},
-};
-
 // Forward declarations
 static int32 GENERIC_FSS_AppInit(void);
 static void  GENERIC_FSS_ProcessCommandPacket(void);
@@ -153,9 +129,7 @@ static int32 GENERIC_FSS_AppInit(void)
     /*
     ** Register the events
     */ 
-    status = CFE_EVS_Register(GENERIC_FSS_EventFilters,
-                              sizeof(GENERIC_FSS_EventFilters)/sizeof(CFE_EVS_BinFilter_t),
-                              CFE_EVS_BINARY_FILTER);    /* as default, no filters are used */
+    status = CFE_EVS_Register(NULL, 0, CFE_EVS_BINARY_FILTER);    /* as default, no filters are used */
     if (status != CFE_SUCCESS)
     {
         CFE_ES_WriteToSysLog("GENERIC_FSS: Error registering for event services: 0x%08X\n", (unsigned int) status);
