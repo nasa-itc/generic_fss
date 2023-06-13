@@ -225,7 +225,7 @@ namespace Nos3
 
         if (_spi_out_data.size() < rlen) rlen = _spi_out_data.size();
 
-        for (int i = 0; i < rlen; i++) {
+        for (size_t i = 0; i < rlen; i++) {
             rbuf[i] = _spi_out_data[i];
         }
         return rlen;
