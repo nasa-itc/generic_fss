@@ -7,7 +7,7 @@
 namespace Nos3
 {
     /* Standard for a data point used transfer data between a data provider and a hardware model */
-    class Generic_fssDataPoint : public SimIDataPoint
+    class Generic_fssDataPoint : public Sim42DataPoint
     {
     public:
         /* Constructors */
@@ -23,7 +23,7 @@ namespace Nos3
     private:
         /* Disallow these */
         Generic_fssDataPoint(void) {};
-        Generic_fssDataPoint(const Generic_fssDataPoint&) {};
+        Generic_fssDataPoint(const Generic_fssDataPoint& sdp) : Sim42DataPoint(sdp) {};
         ~Generic_fssDataPoint(void) {};
 
         /* Specific data you need to get from the data provider to the hardware model */
