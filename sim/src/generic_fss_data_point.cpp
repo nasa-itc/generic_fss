@@ -5,14 +5,17 @@ namespace Nos3
 {
     extern ItcLogger::Logger *sim_logger;
 
-    Generic_fssDataPoint::Generic_fssDataPoint(int16_t spacecraft, const boost::shared_ptr<Sim42DataPoint> dp)
+    Generic_fssDataPoint::Generic_fssDataPoint(int16_t spacecraft, const boost::shared_ptr<Sim42DataPoint> dp) : _dp(*dp), _sc(spacecraft), _not_parsed(true)
     {
         sim_logger->trace("Generic_fssDataPoint::Generic_fssDataPoint:  42 Constructor executed");
 
         /* Initialize data */
         _generic_fss_valid = false;
         _generic_fss_alpha = _generic_fss_beta = 0.0;
+    }
 
+    void Generic_fssDataPoint::do_parsing(void) const
+    {
         try {
             /*
             ** Declare 42 telemetry string prefix
@@ -20,13 +23,13 @@ namespace Nos3
             ** 42 data stream defined in `42/Source/IPC/SimWriteToSocket.c`
             */
             std::string valid_key;
-            valid_key.append("SC[").append(std::to_string(spacecraft)).append("].AC.FSS[0].Valid"); // SC[N].AC.FSS[0].Valid
+            valid_key.append("SC[").append(std::to_string(_sc)).append("].AC.FSS[0].Valid"); // SC[N].AC.FSS[0].Valid
             std::string sunang_key;
-            sunang_key.append("SC[").append(std::to_string(spacecraft)).append("].AC.FSS[0].SunAng"); // SC[N].AC.FSS[0].SunAng
+            sunang_key.append("SC[").append(std::to_string(_sc)).append("].AC.FSS[0].SunAng"); // SC[N].AC.FSS[0].SunAng
 
             /* Parse 42 telemetry */
-            std::string valid_value = dp->get_value_for_key(valid_key);
-            std::string sunang_values = dp->get_value_for_key(sunang_key);
+            std::string valid_value = _dp.get_value_for_key(valid_key);
+            std::string sunang_values = _dp.get_value_for_key(sunang_key);
 
             _generic_fss_valid = (valid_value == "1");
             std::vector<double> data;
@@ -36,6 +39,8 @@ namespace Nos3
 
             /* Debug print */
             sim_logger->trace("Generic_fssDataPoint::Generic_fssDataPoint:  Parsed valid = %s, sunang = %f %f", _generic_fss_valid?"True":"False", _generic_fss_alpha, _generic_fss_beta);
+
+            _not_parsed = false;
         } 
         catch(const std::exception& e) 
         {
