@@ -21,7 +21,7 @@ typedef struct
     float   Alpha;
     float   Beta;
     uint8_t ErrorCode; // 0 = no error (valid alpha, beta), 1 = error (invalid alpha, beta)
-} OS_PACK GENERIC_FSS_Device_Data_tlm_t;
+} __attribute__((packed)) GENERIC_FSS_Device_Data_tlm_t;
 
 /*
 ** Prototypes
