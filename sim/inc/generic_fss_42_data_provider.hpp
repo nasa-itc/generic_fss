@@ -21,7 +21,7 @@ namespace Nos3
     private:
         /* Disallow these */
         ~Generic_fss42DataProvider(void) {};
-        Generic_fss42DataProvider& operator=(const Generic_fss42DataProvider&) {};
+        Generic_fss42DataProvider& operator=(const Generic_fss42DataProvider&) {return *this;};
 
         int16_t _sc;  /* Which spacecraft number to parse out of 42 data */
     };

@@ -4,6 +4,7 @@ TELEMETRY GENERIC_FSS GENERIC_FSS_HK_TLM LITTLE_ENDIAN "GENERIC_FSS_Hk_tlm_t"
   APPEND_ITEM    CCSDS_LENGTH         16 UINT         "CCSDS Packet Data Length" BIG_ENDIAN
   APPEND_ITEM    CCSDS_SECONDS        32 UINT         "CCSDS Telemetry Secondary Header (seconds)"
   APPEND_ITEM    CCSDS_SUBSECS        16 UINT         "CCSDS Telemetry Secondary Header (subseconds)"
+  APPEND_ITEM    CCSDS_SPARE          32 UINT         ""
   APPEND_ITEM    CMD_ERR_COUNT         8 UINT         "Command Error Count"
   APPEND_ITEM    CMD_COUNT             8 UINT         "Command Count"
   APPEND_ITEM    DEVICE_ERR_COUNT      8 UINT         "Device Command Error Count"
@@ -18,6 +19,7 @@ TELEMETRY GENERIC_FSS GENERIC_FSS_DATA_TLM LITTLE_ENDIAN "GENERIC_FSS_Device_tlm
   APPEND_ITEM    CCSDS_LENGTH           16 UINT         "CCSDS Packet Data Length" BIG_ENDIAN
   APPEND_ITEM    CCSDS_SECONDS          32 UINT         "CCSDS Telemetry Secondary Header (seconds)"
   APPEND_ITEM    CCSDS_SUBSECS          16 UINT         "CCSDS Telemetry Secondary Header (subseconds)"
+  APPEND_ITEM    CCSDS_SPARE          32 UINT         ""
   # GENERIC_FSS_Device_Data_tlm_t
   APPEND_ITEM    GENERIC_FSS_ALPHA      32 FLOAT        "Raw generic_fss data alpha angle (-60 to 60)"
   APPEND_ITEM    GENERIC_FSS_BETA       32 FLOAT        "Raw generic_fss data beta angle  (-60 to 60)"
