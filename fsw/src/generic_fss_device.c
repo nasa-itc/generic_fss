@@ -110,9 +110,6 @@ int32_t GENERIC_FSS_RequestData(spi_info_t *device, GENERIC_FSS_Device_Data_tlm_
 static int32_t GENERIC_FSS_ReadData(spi_info_t *device, uint8_t* write_data, uint8_t* read_data, uint8_t data_length)
 {
     int32_t status = OS_ERROR;
-    int32_t bytes = 0;
-    int32_t bytes_available = 0;
-    uint8_t ms_timeout_counter = 0;
 
     /* Read data */
     if ((spi_select_chip(device) == SPI_SUCCESS) &&
@@ -132,7 +129,6 @@ static int32_t GENERIC_FSS_ReadData(spi_info_t *device, uint8_t* write_data, uin
 static int32_t GENERIC_FSS_CommandDevice(spi_info_t *device, uint8_t cmd_code)
 {
     int32_t status = OS_ERROR;
-    int32_t bytes = 0;
     uint8_t write_data[GENERIC_FSS_DEVICE_CMD_SIZE];
     uint8_t read_data[GENERIC_FSS_DEVICE_CMD_SIZE];
 

@@ -252,7 +252,6 @@ static void GENERIC_FSS_ProcessCommandPacket(void)
 */
 static void GENERIC_FSS_ProcessGroundCommand(void)
 {
-    int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
@@ -336,7 +335,6 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
 */
 static void GENERIC_FSS_ProcessTelemetryRequest(void)
 {
-    int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
@@ -374,8 +372,6 @@ static void GENERIC_FSS_ProcessTelemetryRequest(void)
 */
 static void GENERIC_FSS_ReportHousekeeping(void)
 {
-    int32 status = OS_SUCCESS;
-
     /* Time stamp and publish housekeeping telemetry */
     CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt);
     CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt, true);
