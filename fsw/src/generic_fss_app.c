@@ -252,7 +252,6 @@ static void GENERIC_FSS_ProcessCommandPacket(void)
 */
 static void GENERIC_FSS_ProcessGroundCommand(void)
 {
-    int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
@@ -336,7 +335,6 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
 */
 static void GENERIC_FSS_ProcessTelemetryRequest(void)
 {
-    int32 status = OS_SUCCESS;
     CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
@@ -374,8 +372,6 @@ static void GENERIC_FSS_ProcessTelemetryRequest(void)
 */
 static void GENERIC_FSS_ReportHousekeeping(void)
 {
-    int32 status = OS_SUCCESS;
-
     /* Time stamp and publish housekeeping telemetry */
     CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt);
     CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt, true);
@@ -447,7 +443,7 @@ static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expecte
         CFE_MSG_GetFcnCode(msg, &cmd_code);
 
         CFE_EVS_SendEvent(GENERIC_FSS_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-           "Invalid msg length: ID = 0x%X,  CC = %d, Len = %d, Expected = %d",
+           "Invalid msg length: ID = 0x%X,  CC = %d, Len = %ld, Expected = %d",
               CFE_SB_MsgIdToValue(msg_id), cmd_code, actual_length, expected_length);
 
         status = OS_ERROR;
