@@ -28,10 +28,6 @@ void print_help(void)
         "---------------------------------------------------------------------\n"
         "help                               - Display help                    \n"
         "exit                               - Exit app                        \n"
-        "noop                               - No operation command to device  \n"
-        "  n                                - ^                               \n"
-        "hk                                 - Request device housekeeping     \n"
-        "  h                                - ^                               \n"
         "fss                                - Request generic_fss data        \n"
         "  f                                - ^                               \n"
         "\n"
@@ -55,22 +51,6 @@ int get_command(const char* str)
     else if(strcmp(lcmd, "exit") == 0) 
     {
         status = CMD_EXIT;
-    }
-    else if(strcmp(lcmd, "noop") == 0) 
-    {
-        status = CMD_NOOP;
-    }
-    else if(strcmp(lcmd, "n") == 0) 
-    {
-        status = CMD_NOOP;
-    }
-    else if(strcmp(lcmd, "hk") == 0) 
-    {
-        status = CMD_HK;
-    }
-    else if(strcmp(lcmd, "h") == 0) 
-    {
-        status = CMD_HK;
     }
     else if(strcmp(lcmd, "fss") == 0) 
     {
@@ -101,36 +81,6 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
             exit_status = OS_ERROR;
             break;
 
-        case CMD_NOOP:
-            if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
-            {
-                status = GENERIC_FSS_CommandDevice(&FssSpi, GENERIC_FSS_DEVICE_NOOP_CMD, 0);
-                if (status == OS_SUCCESS)
-                {
-                    OS_printf("NOOP command success\n");
-                }
-                else
-                {
-                    OS_printf("NOOP command failed!\n");
-                }
-            }
-            break;
-
-        case CMD_HK:
-            if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
-            {
-                status = GENERIC_FSS_RequestHK(&FssSpi, &FSSHK);
-                if (status == OS_SUCCESS)
-                {
-                    OS_printf("GENERIC_FSS_RequestHK command success\n");
-                }
-                else
-                {
-                    OS_printf("GENERIC_FSS_RequestHK command failed!\n");
-                }
-            }
-            break;
-
         case CMD_GENERIC_FSS:
             if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
             {
@@ -142,22 +92,6 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
                 else
                 {
                     OS_printf("GENERIC_FSS_RequestData command failed!\n");
-                }
-            }
-            break;
-
-        case CMD_CFG:
-            if (check_number_arguments(num_tokens, 1) == OS_SUCCESS)
-            {
-                config = atoi(tokens[0]);
-                status = GENERIC_FSS_CommandDevice(&FssSpi, GENERIC_FSS_DEVICE_CFG_CMD, config);
-                if (status == OS_SUCCESS)
-                {
-                    OS_printf("Configuration command success with value %u\n", config);
-                }
-                else
-                {
-                    OS_printf("Configuration command failed!\n");
                 }
             }
             break;
