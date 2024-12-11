@@ -13,21 +13,6 @@
 #include "generic_fss_platform_cfg.h"
 #include "generic_fss_device.h"
 
-/*
-** Message definitions
-*/
-#define GENERIC_FSS_DEVICE_HDR_0            0xDE
-#define GENERIC_FSS_DEVICE_HDR_1            0xAD
-#define GENERIC_FSS_DEVICE_HDR_2            0xBE
-#define GENERIC_FSS_DEVICE_HDR_3            0xEF
-
-#define GENERIC_FSS_DEVICE_NOOP_CMD         0x00
-#define GENERIC_FSS_DEVICE_REQ_DATA_CMD     0x01
-
-#define GENERIC_FSS_DEVICE_HDR_TRL_LEN      4
-#define GENERIC_FSS_DEVICE_CMD_SIZE         7
-#define GENERIC_FSS_DEVICE_DATA_SIZE        16
-
 // Forward declarations
 static int32_t GENERIC_FSS_ReadData(spi_info_t *device, uint8_t* write_data, uint8_t* read_data, uint8_t data_length);
 static int32_t GENERIC_FSS_CommandDevice(spi_info_t *device, uint8_t cmd);
