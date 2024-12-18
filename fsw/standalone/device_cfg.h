@@ -15,4 +15,6 @@
 #define GENERIC_FSS_CFG_BUS              0
 #define GENERIC_FSS_CFG_CS               1
 
+#define GENERIC_FSS_CFG_DEBUG
+
 #endif /* _GENERIC_FSS_CHECKOUT_DEVICE_CFG_H_ */

@@ -16,13 +16,12 @@
 ** Global Variables
 */
 spi_info_t FssSpi;
-GENERIC_FSS_Device_HK_tlm_t FSSHK;
 GENERIC_FSS_Device_Data_tlm_t FSSData;
 
 /*
 ** Component Functions
 */
-void print_help(void) 
+void fss_print_help(void) 
 {
     printf(PROMPT "command [args]\n"
         "---------------------------------------------------------------------\n"
@@ -35,14 +34,14 @@ void print_help(void)
 }
 
 
-int get_command(const char* str)
+int fss_get_command(const char* str)
 {
     int status = CMD_UNKNOWN;
     char lcmd[MAX_INPUT_TOKEN_SIZE];
     strncpy(lcmd, str, MAX_INPUT_TOKEN_SIZE);
 
     /* Convert command to lower case */
-    to_lower(lcmd);
+    fss_to_lower(lcmd);
 
     if(strcmp(lcmd, "help") == 0) 
     {
@@ -64,17 +63,16 @@ int get_command(const char* str)
 }
 
 
-int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_INPUT_TOKEN_SIZE])
+int fss_process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_INPUT_TOKEN_SIZE])
 {
     int32_t status = OS_SUCCESS;
     int32_t exit_status = OS_SUCCESS;
-    uint32_t config;
 
     /* Process command */
     switch(cc) 
     {	
         case CMD_HELP:
-            print_help();
+            fss_print_help();
             break;
         
         case CMD_EXIT:
@@ -82,12 +80,13 @@ int process_command(int cc, int num_tokens, char tokens[MAX_INPUT_TOKENS][MAX_IN
             break;
 
         case CMD_GENERIC_FSS:
-            if (check_number_arguments(num_tokens, 0) == OS_SUCCESS)
+            if (fss_check_number_arguments(num_tokens, 0) == OS_SUCCESS)
             {
                 status = GENERIC_FSS_RequestData(&FssSpi, &FSSData);
                 if (status == OS_SUCCESS)
                 {
-                    OS_printf("GENERIC_FSS_RequestData command success\n");
+                    OS_printf("GENERIC_FSS_RequestData command success.\n");
+                    
                 }
                 else
                 {
@@ -143,7 +142,7 @@ int main(int argc, char *argv[])
     }
 
     /* Main loop */
-    print_help();
+    fss_print_help();
     while(run_status == OS_SUCCESS) 
     {
         num_input_tokens = -1;
@@ -160,7 +159,7 @@ int main(int argc, char *argv[])
             if(num_input_tokens == -1) 
             {
                 /* First token is command */
-                cmd = get_command(token_ptr);
+                cmd = fss_get_command(token_ptr);
             }
             else 
             {
@@ -174,7 +173,7 @@ int main(int argc, char *argv[])
         if(num_input_tokens >= 0)
         {
             /* Process command */
-            run_status = process_command(cmd, num_input_tokens, input_tokens);
+            run_status = fss_process_command(cmd, num_input_tokens, input_tokens);
         }
     }
 
@@ -193,7 +192,7 @@ int main(int argc, char *argv[])
 /*
 ** Generic Functions
 */
-int check_number_arguments(int actual, int expected)
+int fss_check_number_arguments(int actual, int expected)
 {
     int status = OS_SUCCESS;
     if (actual != expected)
@@ -204,7 +203,7 @@ int check_number_arguments(int actual, int expected)
     return status;
 }
 
-void to_lower(char* str)
+void fss_to_lower(char* str)
 {
     char* ptr = str;
     while(*ptr)

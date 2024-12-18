@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <pthread.h>
-
 #include "hwlib.h"
 #include "device_cfg.h"
 #include "generic_fss_device.h"
@@ -56,14 +54,14 @@
 /*
 ** Prototypes
 */
-void print_help(void);
-int  get_command(const char* str);
+void fss_print_help(void);
+int  fss_get_command(const char* str);
 int  main(int argc, char *argv[]);
 
 /*
 ** Generic Prototypes
 */
-int check_number_arguments(int actual, int expected);
-void to_lower(char* str);
+int fss_check_number_arguments(int actual, int expected);
+void fss_to_lower(char* str);
 
 #endif /* _GENERIC_FSS_CHECKOUT_H_ */
