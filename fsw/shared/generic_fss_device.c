@@ -13,21 +13,6 @@
 #include "generic_fss_platform_cfg.h"
 #include "generic_fss_device.h"
 
-/*
-** Message definitions
-*/
-#define GENERIC_FSS_DEVICE_HDR_0            0xDE
-#define GENERIC_FSS_DEVICE_HDR_1            0xAD
-#define GENERIC_FSS_DEVICE_HDR_2            0xBE
-#define GENERIC_FSS_DEVICE_HDR_3            0xEF
-
-#define GENERIC_FSS_DEVICE_NOOP_CMD         0x00
-#define GENERIC_FSS_DEVICE_REQ_DATA_CMD     0x01
-
-#define GENERIC_FSS_DEVICE_HDR_TRL_LEN      4
-#define GENERIC_FSS_DEVICE_CMD_SIZE         7
-#define GENERIC_FSS_DEVICE_DATA_SIZE        16
-
 // Forward declarations
 static int32_t GENERIC_FSS_ReadData(spi_info_t *device, uint8_t* write_data, uint8_t* read_data, uint8_t data_length);
 static int32_t GENERIC_FSS_CommandDevice(spi_info_t *device, uint8_t cmd);
@@ -77,13 +62,13 @@ int32_t GENERIC_FSS_RequestData(spi_info_t *device, GENERIC_FSS_Device_Data_tlm_
                 data->ErrorCode = read_data[14];
                 
                 #ifdef GENERIC_FSS_CFG_DEBUG
-                    OS_printf("  Header           = 0x%02x%02x%02x%02x  \n", read_data[0], read_data[1], read_data[2], read_data[3]);
-                    OS_printf("  Command          = 0x%08x              \n", read[4]);
-                    OS_printf("  Length           = 0x%08x              \n", read[5]);
-                    OS_printf("  Checksum         = 0x%08x              \n", read[15]);
-                    OS_printf("  Data alpha       = 0x%04x, %d          \n", data->Alpha, data->Alpha);
-                    OS_printf("  Data beta        = 0x%04x, %d          \n", data->Beta, data->Beta);
-                    OS_printf("  Data error code  = 0x%04x, %d          \n", data->ErrorCode, data->ErrorCode);
+                    OS_printf("  Header           = 0x%02x%02x%02x%02x \n", read_data[0], read_data[1], read_data[2], read_data[3]);
+                    OS_printf("  Command          = 0x%08x \n", read_data[4]);
+                    OS_printf("  Length           = 0x%08x \n", read_data[5]);
+                    OS_printf("  Data alpha       = 0x%02x%02x%02x%02x, %f \n", read_data[6], read_data[7], read_data[8], read_data[9], data->Alpha);
+                    OS_printf("  Data beta        = 0x%02x%02x%02x%02x, %f \n", read_data[10], read_data[11], read_data[12], read_data[13], data->Beta);
+                    OS_printf("  Data error code  = 0x%02x, %d          \n", data->ErrorCode, data->ErrorCode);
+                    OS_printf("  Checksum         = 0x%08x \n", read_data[15]);
                 #endif
             }
         } 
