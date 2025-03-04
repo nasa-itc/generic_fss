@@ -12,6 +12,8 @@ namespace Nos3
     public:
         /* Constructors */
         Generic_fssDataPoint(int16_t spacecraft, const boost::shared_ptr<Sim42DataPoint> dp);
+        Generic_fssDataPoint(int valid, double alpha, double beta);
+        ~Generic_fssDataPoint(void) {};
 
         /* Accessors */
         /* Provide the hardware model a way to get the specific data out of the data point */
@@ -24,7 +26,6 @@ namespace Nos3
         /* Disallow these */
         Generic_fssDataPoint(void) {};
         Generic_fssDataPoint(const Generic_fssDataPoint& sdp) : Sim42DataPoint(sdp) {};
-        ~Generic_fssDataPoint(void) {};
 
         /// @name Private mutators
         //@{
