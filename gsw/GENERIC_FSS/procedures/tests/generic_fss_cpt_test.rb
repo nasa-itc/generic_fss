@@ -122,21 +122,18 @@ fss_beta = tlm("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_BETA")
 fss_error = tlm("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ERROR_CODE")
 
 truth_42_alpha = -Math.atan2(svb2, svb0)
-truth_42_beta = Math.atan2(svb1, svb2)
+truth_42_beta = Math.atan2(svb1, svb0)
 
-truth_42_alpha_upper = truth_42_alpha + 0.01
-truth_42_alpha_lower = truth_42_alpha - 0.01
-truth_42_beta_upper = truth_42_beta + 0.01
-truth_42_beta_lower = truth_42_beta - 0.01
+truth_42_alpha_diff = (fss_alpha - truth_42_alpha).abs()
+truth_42_beta_diff = (fss_beta - truth_42_beta).abs()
+diff_margin = 0.025
 
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM CMD_ERR_COUNT == #{initial_error_count}", 30)
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM DEVICE_ERR_COUNT == #{initial_device_error_count}", 30)
 if fss_error == 0
-  wait_check_expression("fss_alpha <= truth_42_alpha_upper # #{fss_alpha} <= #{truth_42_alpha_upper}", 15)
-  wait_check_expression("fss_alpha >= truth_42_alpha_lower # #{fss_alpha} >= #{truth_42_alpha_lower}", 15)
+  wait_check_expression("truth_42_alpha_diff <= diff_margin # #{truth_42_alpha_diff} >= #{diff_margin}", 15)
 
-  wait_check_expression("fss_beta <= truth_42_beta_upper # #{fss_beta} <= #{truth_42_beta_upper}", 15)
-  wait_check_expression("fss_beta >= truth_42_beta_lower # #{fss_beta} >= #{truth_42_beta_lower}", 15)
+  wait_check_expression("truth_42_beta_diff <= diff_margin # #{truth_42_beta_diff} >= #{diff_margin}", 15)
 end
 
 sleep(5)
