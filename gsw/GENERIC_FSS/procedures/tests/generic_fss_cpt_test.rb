@@ -131,9 +131,9 @@ diff_margin = 0.025
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM CMD_ERR_COUNT == #{initial_error_count}", 30)
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM DEVICE_ERR_COUNT == #{initial_device_error_count}", 30)
 if fss_error == 0
-  wait_check_expression("truth_42_alpha_diff <= diff_margin # #{truth_42_alpha_diff} >= #{diff_margin}", 15)
+  wait_check_expression("truth_42_alpha_diff <= diff_margin # #{truth_42_alpha_diff} <= #{diff_margin}", 15)
 
-  wait_check_expression("truth_42_beta_diff <= diff_margin # #{truth_42_beta_diff} >= #{diff_margin}", 15)
+  wait_check_expression("truth_42_beta_diff <= diff_margin # #{truth_42_beta_diff} <= #{diff_margin}", 15)
 end
 
 sleep(5)
