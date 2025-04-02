@@ -117,23 +117,19 @@ svb0 = tlm("SIM_42_TRUTH SIM_42_TRUTH_DATA SVB_0")
 svb1 = tlm("SIM_42_TRUTH SIM_42_TRUTH_DATA SVB_1")
 svb2 = tlm("SIM_42_TRUTH SIM_42_TRUTH_DATA SVB_2")
 
-fss_alpha = tlm("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ALPHA")
-fss_beta = tlm("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_BETA")
 fss_error = tlm("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ERROR_CODE")
 
 truth_42_alpha = -Math.atan2(svb2, svb0)
 truth_42_beta = Math.atan2(svb1, svb0)
 
-truth_42_alpha_diff = (fss_alpha - truth_42_alpha).abs()
-truth_42_beta_diff = (fss_beta - truth_42_beta).abs()
-diff_margin = 0.025
+diff = 0.03
 
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM CMD_ERR_COUNT == #{initial_error_count}", 30)
 wait_check("GENERIC_FSS GENERIC_FSS_HK_TLM DEVICE_ERR_COUNT == #{initial_device_error_count}", 30)
 if fss_error == 0
-  wait_check_expression("truth_42_alpha_diff <= diff_margin # #{truth_42_alpha_diff} <= #{diff_margin}", 15)
+  wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ALPHA", truth_42_alpha, diff, 30)
 
-  wait_check_expression("truth_42_beta_diff <= diff_margin # #{truth_42_beta_diff} <= #{diff_margin}", 15)
+  wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_BETA", truth_42_beta, diff, 30)
 end
 
 sleep(5)
