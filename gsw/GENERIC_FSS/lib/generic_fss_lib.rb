@@ -89,9 +89,9 @@ def confirm_fss_data()
     diff = 0.03
 
     if fss_error == 0
-        wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ALPHA", truth_42_alpha, diff, 30)
+        wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_ALPHA", truth_42_alpha, diff, GENERIC_FSS_RESPONSE_TIMEOUT)
 
-        wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_BETA", truth_42_beta, diff, 30)
+        wait_check_tolerance("GENERIC_FSS GENERIC_FSS_DATA_TLM GENERIC_FSS_BETA", truth_42_beta, diff, GENERIC_FSS_RESPONSE_TIMEOUT)
     end
 
     get_fss_hk()
