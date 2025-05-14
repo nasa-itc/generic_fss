@@ -14,6 +14,11 @@ namespace Nos3
         _generic_fss_alpha = _generic_fss_beta = 0.0;
     }
 
+    Generic_fssDataPoint::Generic_fssDataPoint(int valid, double alpha, double beta) : 
+        _not_parsed(false), _generic_fss_valid(valid), _generic_fss_alpha(alpha), _generic_fss_beta(beta)
+    {
+    }
+
     void Generic_fssDataPoint::do_parsing(void) const
     {
         try {
