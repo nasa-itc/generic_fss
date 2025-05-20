@@ -39,8 +39,13 @@ namespace Nos3
             _generic_fss_valid = (valid_value == "1");
             std::vector<double> data;
             parse_double_vector(sunang_values, data);
-            _generic_fss_alpha = data[0];
-            _generic_fss_beta = data[1];
+
+            if (data.size() < 2) {
+                _generic_fss_valid = false;
+            } else {
+                _generic_fss_alpha = data[0];
+                _generic_fss_beta = data[1];
+            }
 
             /* Debug print */
             sim_logger->trace("Generic_fssDataPoint::Generic_fssDataPoint:  Parsed valid = %s, sunang = %f %f", _generic_fss_valid?"True":"False", _generic_fss_alpha, _generic_fss_beta);
