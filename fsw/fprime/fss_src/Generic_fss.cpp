@@ -52,6 +52,8 @@ namespace Components {
         status = OS_ERROR;
     }
 
+    status = spi_close_device(&FssSpi);
+
   }
 
   Generic_fss ::
@@ -171,17 +173,29 @@ namespace Components {
 
   void Generic_fss :: REQUEST_HOUSEKEEPING_cmdHandler(FwOpcodeType opCode, U32 cmdSeq){
     
-    this->tlmWrite_ALPHA(FSSData.Alpha);
-    this->tlmWrite_BETA(FSSData.Beta);
-    this->tlmWrite_ERRORCODE(FSSData.ErrorCode);
-    this->tlmWrite_CommandCount(HkTelemetryPkt.CommandCount);
-    this->tlmWrite_CommandErrorCount(HkTelemetryPkt.CommandErrorCount);
-    this->tlmWrite_DeviceCount(HkTelemetryPkt.DeviceCount);
-    this->tlmWrite_DeviceErrorCount(HkTelemetryPkt.DeviceErrorCount);
-    this->tlmWrite_DeviceEnabled(get_active_state(HkTelemetryPkt.DeviceEnabled));
+    if(HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
+    {
+      HkTelemetryPkt.CommandCount++;
 
-    this->log_ACTIVITY_HI_TELEM("Requested Housekeeping!");
-    OS_printf("Requested Housekeeping!\n");
+      this->tlmWrite_ALPHA(FSSData.Alpha);
+      this->tlmWrite_BETA(FSSData.Beta);
+      this->tlmWrite_ERRORCODE(FSSData.ErrorCode);
+      this->tlmWrite_CommandCount(HkTelemetryPkt.CommandCount);
+      this->tlmWrite_CommandErrorCount(HkTelemetryPkt.CommandErrorCount);
+      this->tlmWrite_DeviceCount(HkTelemetryPkt.DeviceCount);
+      this->tlmWrite_DeviceErrorCount(HkTelemetryPkt.DeviceErrorCount);
+      this->tlmWrite_DeviceEnabled(get_active_state(HkTelemetryPkt.DeviceEnabled));
+
+      this->log_ACTIVITY_HI_TELEM("Requested Housekeeping!");
+      OS_printf("Requested Housekeeping!\n");
+    }
+    else
+    {
+      this->log_ACTIVITY_HI_TELEM("Device Disabled!");
+      OS_printf("Device Disabled!\n");
+    }
+
+    
 
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
   }
