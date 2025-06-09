@@ -6,14 +6,49 @@ module Components {
         #### Uncomment the following examples to start customizing your component ####
         ##############################################################################
 
+        @ Component Enable State
+        enum ActiveState {
+            DISABLED @< DISABLED
+            ENABLED @< ENABLED
+        }
+
+        @ NOOP Cmd
+        async command NOOP()
+
+        @ Reset Counters Cmd
+        async command RESET_COUNTERS()
+
+        @ Enable Cmd
+        async command ENABLE()
+
+        @ Disable Cmd
+        async command DISABLE()
+
+        @ Request Housekeeping
+        async command REQUEST_HOUSEKEEPING()
+
         @ Command to request data
         async command REQUEST_DATA(
         )
 
         @ Telemetry event
         event TELEM(
-            log_info: string size 30
+            log_info: string size 40
         ) severity activity high format "Generic_fss: {}"
+
+        @ Command Count
+        telemetry CommandCount: U32
+
+        @ Command Error Count
+        telemetry CommandErrorCount: U32
+
+        @ Device Count
+        telemetry DeviceCount: U32
+
+        @ Device Error Count
+        telemetry DeviceErrorCount: U32
+
+        telemetry DeviceEnabled: ActiveState
 
         @ Angle alpha
         telemetry ALPHA: U32
