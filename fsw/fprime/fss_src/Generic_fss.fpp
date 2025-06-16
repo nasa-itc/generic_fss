@@ -6,6 +6,12 @@ module Components {
         #### Uncomment the following examples to start customizing your component ####
         ##############################################################################
 
+        @ FSS output port
+        output port FSSout: FSSDataPort
+
+        @ Periodic Data FSS
+        async input port updateData: Svc.Sched
+
         @ Command to request data
         async command REQUEST_DATA(
         )

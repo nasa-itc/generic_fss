@@ -106,4 +106,17 @@ namespace Components {
     this->cmdResponse_out(opCode, cmdSeq, Fw::CmdResponse::OK);
   }
 
+  void Generic_fss :: updateData_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
+  {
+    int32_t status = OS_SUCCESS;
+  
+    status = GENERIC_FSS_RequestData(&FssSpi, &FSSData);
+
+    this->tlmWrite_ALPHA(FSSData.Alpha);
+    this->tlmWrite_BETA(FSSData.Beta);
+    this->tlmWrite_ERRORCODE(FSSData.ErrorCode);
+
+    this->FSSout_out(0, FSSData.Alpha, FSSData.Beta, FSSData.ErrorCode);
+  }
+
 }

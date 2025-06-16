@@ -40,6 +40,11 @@ namespace Components {
           U32 cmdSeq //!< The command sequence number
       ) override;
 
+      void updateData_handler(
+        const NATIVE_INT_TYPE portNum, //!< The port number
+        NATIVE_UINT_TYPE context //!< The call order
+      ) override;
+
   };
 
 }
