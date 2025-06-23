@@ -38,7 +38,7 @@ namespace Components {
     HkTelemetryPkt.CommandErrorCount = 0;
     HkTelemetryPkt.DeviceCount = 0;
     HkTelemetryPkt.DeviceErrorCount = 0;
-    HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
+    HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_ENABLED;
 
     /* Open device specific protocols */
     status = spi_init_dev(&FssSpi);
@@ -52,7 +52,7 @@ namespace Components {
         status = OS_ERROR;
     }
 
-    status = spi_close_device(&FssSpi);
+    // status = spi_close_device(&FssSpi);
 
   }
 
