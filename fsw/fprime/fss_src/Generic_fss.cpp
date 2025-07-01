@@ -76,10 +76,6 @@ namespace Components {
     int32_t status = OS_SUCCESS;
   
     status = GENERIC_FSS_RequestData(&FssSpi, &FSSData);
-    
-    this->tlmWrite_ALPHA(FSSData.Alpha);
-    this->tlmWrite_BETA(FSSData.Beta);
-    this->tlmWrite_ERRORCODE(FSSData.ErrorCode);
 
     this->FSSout_out(0, FSSData.Alpha, FSSData.Beta, FSSData.ErrorCode);
   }

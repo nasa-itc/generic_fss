@@ -57,10 +57,10 @@ module Components {
         telemetry DeviceEnabled: ActiveState
 
         @ Angle alpha
-        telemetry ALPHA: U32
+        telemetry ALPHA: F32
 
         @ Angle beta
-        telemetry BETA: U32
+        telemetry BETA: F32
 
         @ errorcode
         telemetry ERRORCODE: U8
