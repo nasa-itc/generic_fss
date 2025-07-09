@@ -91,6 +91,16 @@ namespace Components {
           U32 cmdSeq //!< The command sequence number
       ) override;
 
+      void updateData_handler(
+        const NATIVE_INT_TYPE portNum, //!< The port number
+        NATIVE_UINT_TYPE context //!< The call order
+      ) override;
+
+      void updateTlm_handler(
+        const NATIVE_INT_TYPE portNum, //!< The port number
+        NATIVE_UINT_TYPE context //!< The call order
+      ) override;
+
       inline Generic_fss_ActiveState get_active_state(uint8_t DeviceEnabled);
 
   };

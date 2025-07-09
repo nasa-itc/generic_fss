@@ -6,6 +6,15 @@ module Components {
         #### Uncomment the following examples to start customizing your component ####
         ##############################################################################
 
+        @ FSS output port
+        output port FSSout: FSSDataPort
+
+        @ Periodic Data FSS
+        async input port updateData: Svc.Sched
+
+        @ Periodic Tlm FSS
+        async input port updateTlm: Svc.Sched
+
         @ Component Enable State
         enum ActiveState {
             DISABLED @< DISABLED
@@ -51,15 +60,13 @@ module Components {
         telemetry DeviceEnabled: ActiveState
 
         @ Angle alpha
-        telemetry ALPHA: U32
+        telemetry ALPHA: F32
 
         @ Angle beta
-        telemetry BETA: U32
+        telemetry BETA: F32
 
         @ errorcode
         telemetry ERRORCODE: U8
-
-
 
         # @ Example port: receiving calls from the rate group
         # sync input port run: Svc.Sched
