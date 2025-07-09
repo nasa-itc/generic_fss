@@ -12,6 +12,9 @@ module Components {
         @ Periodic Data FSS
         async input port updateData: Svc.Sched
 
+        @ Periodic Tlm FSS
+        async input port updateTlm: Svc.Sched
+
         @ Component Enable State
         enum ActiveState {
             DISABLED @< DISABLED
