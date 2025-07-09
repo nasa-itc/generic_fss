@@ -77,7 +77,15 @@ namespace Components {
   
     status = GENERIC_FSS_RequestData(&FssSpi, &FSSData);
 
-    this->FSSout_out(0, FSSData.Alpha, FSSData.Beta, FSSData.ErrorCode);
+    if(status == OS_SUCCESS)
+    {
+      HkTelemetryPkt.DeviceCount++;
+      this->FSSout_out(0, FSSData.Alpha, FSSData.Beta, FSSData.ErrorCode);
+    }
+    else
+    {
+      HkTelemetryPkt.DeviceErrorCount++;
+    }
   }
 
   void Generic_fss :: updateTlm_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
