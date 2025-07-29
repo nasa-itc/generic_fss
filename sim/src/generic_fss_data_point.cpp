@@ -14,6 +14,11 @@ namespace Nos3
         _generic_fss_alpha = _generic_fss_beta = 0.0;
     }
 
+    Generic_fssDataPoint::Generic_fssDataPoint(int valid, double alpha, double beta) : 
+        _not_parsed(false), _generic_fss_valid(valid), _generic_fss_alpha(alpha), _generic_fss_beta(beta)
+    {
+    }
+
     void Generic_fssDataPoint::do_parsing(void) const
     {
         try {
@@ -23,9 +28,9 @@ namespace Nos3
             ** 42 data stream defined in `42/Source/IPC/SimWriteToSocket.c`
             */
             std::string valid_key;
-            valid_key.append("SC[").append(std::to_string(_sc)).append("].AC.FSS[0].Valid"); // SC[N].AC.FSS[0].Valid
+            valid_key.append("SC[").append(std::to_string(_sc)).append("].FSS[0].Valid"); // SC[N].FSS[0].Valid
             std::string sunang_key;
-            sunang_key.append("SC[").append(std::to_string(_sc)).append("].AC.FSS[0].SunAng"); // SC[N].AC.FSS[0].SunAng
+            sunang_key.append("SC[").append(std::to_string(_sc)).append("].FSS[0].SunAng"); // SC[N].FSS[0].SunAng
 
             /* Parse 42 telemetry */
             std::string valid_value = _dp.get_value_for_key(valid_key);
@@ -34,8 +39,13 @@ namespace Nos3
             _generic_fss_valid = (valid_value == "1");
             std::vector<double> data;
             parse_double_vector(sunang_values, data);
-            _generic_fss_alpha = data[0];
-            _generic_fss_beta = data[1];
+
+            if (data.size() < 2) {
+                _generic_fss_valid = false;
+            } else {
+                _generic_fss_alpha = data[0];
+                _generic_fss_beta = data[1];
+            }
 
             /* Debug print */
             sim_logger->trace("Generic_fssDataPoint::Generic_fssDataPoint:  Parsed valid = %s, sunang = %f %f", _generic_fss_valid?"True":"False", _generic_fss_alpha, _generic_fss_beta);

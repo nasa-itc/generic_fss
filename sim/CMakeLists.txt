@@ -11,6 +11,7 @@ include_directories(inc
 set(generic_fss_sim_src
     src/generic_fss_hardware_model.cpp
     src/generic_fss_42_data_provider.cpp
+    src/generic_fss_shmem_data_provider.cpp
     src/generic_fss_data_point.cpp
 )
 

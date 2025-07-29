@@ -17,7 +17,6 @@
 #include "generic_fss_msgids.h"
 #include "generic_fss_version.h"
 
-
 /*
 ** Global Data
 */
@@ -31,10 +30,9 @@ static void  GENERIC_FSS_ProcessTelemetryRequest(void);
 static void  GENERIC_FSS_ReportHousekeeping(void);
 static void  GENERIC_FSS_ReportDeviceTelemetry(void);
 static void  GENERIC_FSS_ResetCounters(void);
-static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expected_length);
+static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t *msg, uint16 expected_length);
 static void  GENERIC_FSS_Enable(void);
 static void  GENERIC_FSS_Disable(void);
-
 
 /*
 ** Application entry point and main process loop
@@ -48,7 +46,7 @@ void FSS_AppMain(void)
     */
     CFE_ES_PerfLogEntry(GENERIC_FSS_PERF_ID);
 
-    /* 
+    /*
     ** Perform application initialization
     */
     status = GENERIC_FSS_AppInit();
@@ -67,13 +65,14 @@ void FSS_AppMain(void)
         */
         CFE_ES_PerfLogExit(GENERIC_FSS_PERF_ID);
 
-        /* 
+        /*
         ** Pend on the arrival of the next Software Bus message
         ** Note that this is the standard, but timeouts are available
         */
-        status = CFE_SB_ReceiveBuffer((CFE_SB_Buffer_t **)&GENERIC_FSS_AppData.MsgPtr,  GENERIC_FSS_AppData.CmdPipe,  CFE_SB_PEND_FOREVER);
-        
-        /* 
+        status = CFE_SB_ReceiveBuffer((CFE_SB_Buffer_t **)&GENERIC_FSS_AppData.MsgPtr, GENERIC_FSS_AppData.CmdPipe,
+                                      CFE_SB_PEND_FOREVER);
+
+        /*
         ** Begin performance metrics on anything after this line. This will help to determine
         ** where we are spending most of the time during this app execution.
         */
@@ -90,7 +89,8 @@ void FSS_AppMain(void)
         }
         else
         {
-            CFE_EVS_SendEvent(GENERIC_FSS_PIPE_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: SB Pipe Read Error = %d", (int) status);
+            CFE_EVS_SendEvent(GENERIC_FSS_PIPE_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: SB Pipe Read Error = %d",
+                              (int)status);
             GENERIC_FSS_AppData.RunStatus = CFE_ES_RunStatus_APP_ERROR;
         }
     }
@@ -109,39 +109,38 @@ void FSS_AppMain(void)
     ** Exit the application
     */
     CFE_ES_ExitApp(GENERIC_FSS_AppData.RunStatus);
-} 
+}
 
-
-/* 
+/*
 ** Initialize application
 */
 static int32 GENERIC_FSS_AppInit(void)
 {
     int32 status = OS_SUCCESS;
-    
+
     GENERIC_FSS_AppData.RunStatus = CFE_ES_RunStatus_APP_RUN;
 
     /*
     ** Register the events
-    */ 
-    status = CFE_EVS_Register(NULL, 0, CFE_EVS_EventFilter_BINARY);    /* as default, no filters are used */
+    */
+    status = CFE_EVS_Register(NULL, 0, CFE_EVS_EventFilter_BINARY); /* as default, no filters are used */
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("GENERIC_FSS: Error registering for event services: 0x%08X\n", (unsigned int) status);
-       return status;
+        CFE_ES_WriteToSysLog("GENERIC_FSS: Error registering for event services: 0x%08X\n", (unsigned int)status);
+        return status;
     }
 
     /*
-    ** Create the Software Bus command pipe 
+    ** Create the Software Bus command pipe
     */
     status = CFE_SB_CreatePipe(&GENERIC_FSS_AppData.CmdPipe, GENERIC_FSS_PIPE_DEPTH, "FSS_CMD_PIPE");
     if (status != CFE_SUCCESS)
     {
-        CFE_EVS_SendEvent(GENERIC_FSS_PIPE_ERR_EID, CFE_EVS_EventType_ERROR,
-            "Error Creating SB Pipe,RC=0x%08X",(unsigned int) status);
-       return status;
+        CFE_EVS_SendEvent(GENERIC_FSS_PIPE_ERR_EID, CFE_EVS_EventType_ERROR, "Error Creating SB Pipe,RC=0x%08X",
+                          (unsigned int)status);
+        return status;
     }
-    
+
     /*
     ** Subscribe to ground commands
     */
@@ -149,8 +148,8 @@ static int32 GENERIC_FSS_AppInit(void)
     if (status != CFE_SUCCESS)
     {
         CFE_EVS_SendEvent(GENERIC_FSS_SUB_CMD_ERR_EID, CFE_EVS_EventType_ERROR,
-            "Error Subscribing to HK Gnd Cmds, MID=0x%04X, RC=0x%08X",
-            GENERIC_FSS_CMD_MID, (unsigned int) status);
+                          "Error Subscribing to HK Gnd Cmds, MID=0x%04X, RC=0x%08X", GENERIC_FSS_CMD_MID,
+                          (unsigned int)status);
         return status;
     }
 
@@ -161,29 +160,27 @@ static int32 GENERIC_FSS_AppInit(void)
     if (status != CFE_SUCCESS)
     {
         CFE_EVS_SendEvent(GENERIC_FSS_SUB_REQ_HK_ERR_EID, CFE_EVS_EventType_ERROR,
-            "Error Subscribing to HK Request, MID=0x%04X, RC=0x%08X",
-            GENERIC_FSS_REQ_HK_MID, (unsigned int) status);
+                          "Error Subscribing to HK Request, MID=0x%04X, RC=0x%08X", GENERIC_FSS_REQ_HK_MID,
+                          (unsigned int)status);
         return status;
     }
 
-    /* 
-    ** Initialize the published HK message - this HK message will contain the 
+    /*
+    ** Initialize the published HK message - this HK message will contain the
     ** telemetry that has been defined in the GENERIC_FSS_HkTelemetryPkt for this app.
     */
-    CFE_MSG_Init(CFE_MSG_PTR(GENERIC_FSS_AppData.HkTelemetryPkt.TlmHeader),
-                   CFE_SB_ValueToMsgId(GENERIC_FSS_HK_TLM_MID),
-                   GENERIC_FSS_HK_TLM_LNGTH);
+    CFE_MSG_Init(CFE_MSG_PTR(GENERIC_FSS_AppData.HkTelemetryPkt.TlmHeader), CFE_SB_ValueToMsgId(GENERIC_FSS_HK_TLM_MID),
+                 GENERIC_FSS_HK_TLM_LNGTH);
 
     /*
     ** Initialize the device packet message
     ** This packet is specific to your application
     */
-    CFE_MSG_Init(CFE_MSG_PTR(GENERIC_FSS_AppData.DevicePkt.TlmHeader),
-                   CFE_SB_ValueToMsgId(GENERIC_FSS_DEVICE_TLM_MID),
-                   GENERIC_FSS_DEVICE_TLM_LNGTH);
+    CFE_MSG_Init(CFE_MSG_PTR(GENERIC_FSS_AppData.DevicePkt.TlmHeader), CFE_SB_ValueToMsgId(GENERIC_FSS_DEVICE_TLM_MID),
+                 GENERIC_FSS_DEVICE_TLM_LNGTH);
 
-    /* 
-    ** Always reset all counters during application initialization 
+    /*
+    ** Always reset all counters during application initialization
     */
     GENERIC_FSS_ResetCounters();
 
@@ -193,25 +190,21 @@ static int32 GENERIC_FSS_AppInit(void)
     */
     GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
 
-    /* 
-     ** Send an information event that the app has initialized. 
+    /*
+     ** Send an information event that the app has initialized.
      ** This is useful for debugging the loading of individual applications.
      */
     status = CFE_EVS_SendEvent(GENERIC_FSS_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION,
-               "GENERIC_FSS App Initialized. Version %d.%d.%d.%d",
-                GENERIC_FSS_MAJOR_VERSION,
-                GENERIC_FSS_MINOR_VERSION, 
-                GENERIC_FSS_REVISION, 
-                GENERIC_FSS_MISSION_REV);	
+                               "GENERIC_FSS App Initialized. Version %d.%d.%d.%d", GENERIC_FSS_MAJOR_VERSION,
+                               GENERIC_FSS_MINOR_VERSION, GENERIC_FSS_REVISION, GENERIC_FSS_MISSION_REV);
     if (status != CFE_SUCCESS)
     {
-        CFE_ES_WriteToSysLog("GENERIC_FSS: Error sending initialization event: 0x%08X\n", (unsigned int) status);
+        CFE_ES_WriteToSysLog("GENERIC_FSS: Error sending initialization event: 0x%08X\n", (unsigned int)status);
     }
     return status;
-} 
+}
 
-
-/* 
+/*
 ** Process packets received on the GENERIC_FSS command pipe
 */
 static void GENERIC_FSS_ProcessCommandPacket(void)
@@ -235,24 +228,24 @@ static void GENERIC_FSS_ProcessCommandPacket(void)
             break;
 
         /*
-        ** All other invalid messages that this app doesn't recognize, 
-        ** increment the command error counter and log as an error event.  
+        ** All other invalid messages that this app doesn't recognize,
+        ** increment the command error counter and log as an error event.
         */
         default:
             GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_PROCESS_CMD_ERR_EID,CFE_EVS_EventType_ERROR, "GENERIC_FSS: Invalid command packet, MID = 0x%x", CFE_SB_MsgIdToValue(MsgId));
+            CFE_EVS_SendEvent(GENERIC_FSS_PROCESS_CMD_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: Invalid command packet, MID = 0x%x", CFE_SB_MsgIdToValue(MsgId));
             break;
     }
     return;
-} 
-
+}
 
 /*
 ** Process ground commands
 */
 static void GENERIC_FSS_ProcessGroundCommand(void)
 {
-    CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
+    CFE_SB_MsgId_t    MsgId       = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
     /*
@@ -272,14 +265,23 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
         */
         case GENERIC_FSS_NOOP_CC:
             /*
-            ** First, verify the command length immediately after CC identification 
+            ** First, verify the command length immediately after CC identification
             ** Note that VerifyCmdLength handles the command and command error counters
             */
             if (GENERIC_FSS_VerifyCmdLength(GENERIC_FSS_AppData.MsgPtr, sizeof(GENERIC_FSS_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                /* Second, send EVS event on successful receipt ground commands*/
-                CFE_EVS_SendEvent(GENERIC_FSS_CMD_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: NOOP command received");
+                /* Do any necessary checks, none for a NOOP */
+
+                /* Increment Command Success or error counter, NOOP can only be successful*/
+                GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
+
                 /* Third, do the desired command action if applicable, in the case of NOOP it is no operation */
+
+                /* Increment device success or error counter, none for NOOP as application only */
+
+                /* Send EVS event on successful receipt ground commands*/
+                CFE_EVS_SendEvent(GENERIC_FSS_CMD_NOOP_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                  "GENERIC_FSS: NOOP command received");
             }
             break;
 
@@ -289,8 +291,12 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
         case GENERIC_FSS_RESET_COUNTERS_CC:
             if (GENERIC_FSS_VerifyCmdLength(GENERIC_FSS_AppData.MsgPtr, sizeof(GENERIC_FSS_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                CFE_EVS_SendEvent(GENERIC_FSS_CMD_RESET_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: RESET counters command received");
+                GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
+
                 GENERIC_FSS_ResetCounters();
+
+                CFE_EVS_SendEvent(GENERIC_FSS_CMD_RESET_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                  "GENERIC_FSS: RESET counters command received");
             }
             break;
 
@@ -300,8 +306,10 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
         case GENERIC_FSS_ENABLE_CC:
             if (GENERIC_FSS_VerifyCmdLength(GENERIC_FSS_AppData.MsgPtr, sizeof(GENERIC_FSS_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                CFE_EVS_SendEvent(GENERIC_FSS_CMD_ENABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: Enable command received");
                 GENERIC_FSS_Enable();
+
+                CFE_EVS_SendEvent(GENERIC_FSS_CMD_ENABLE_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                  "GENERIC_FSS: Enable command received");
             }
             break;
 
@@ -311,8 +319,10 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
         case GENERIC_FSS_DISABLE_CC:
             if (GENERIC_FSS_VerifyCmdLength(GENERIC_FSS_AppData.MsgPtr, sizeof(GENERIC_FSS_NoArgs_cmd_t)) == OS_SUCCESS)
             {
-                CFE_EVS_SendEvent(GENERIC_FSS_CMD_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: Disable command received");
                 GENERIC_FSS_Disable();
+
+                CFE_EVS_SendEvent(GENERIC_FSS_CMD_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION,
+                                  "GENERIC_FSS: Disable command received");
             }
             break;
 
@@ -322,20 +332,20 @@ static void GENERIC_FSS_ProcessGroundCommand(void)
         default:
             /* Increment the error counter upon receipt of an invalid command */
             GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_CMD_ERR_EID, CFE_EVS_EventType_ERROR, 
-                "GENERIC_FSS: Invalid command code for packet, MID = 0x%x, cmdCode = 0x%x", CFE_SB_MsgIdToValue(MsgId), CommandCode);
+            CFE_EVS_SendEvent(GENERIC_FSS_CMD_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: Invalid command code for packet, MID = 0x%x, cmdCode = 0x%x",
+                              CFE_SB_MsgIdToValue(MsgId), CommandCode);
             break;
     }
     return;
-} 
-
+}
 
 /*
 ** Process Telemetry Request - Triggered in response to a telemetery request
 */
 static void GENERIC_FSS_ProcessTelemetryRequest(void)
 {
-    CFE_SB_MsgId_t MsgId = CFE_SB_INVALID_MSG_ID;
+    CFE_SB_MsgId_t    MsgId       = CFE_SB_INVALID_MSG_ID;
     CFE_MSG_FcnCode_t CommandCode = 0;
 
     /* MsgId is only needed if the command code is not recognized. See default case */
@@ -359,25 +369,24 @@ static void GENERIC_FSS_ProcessTelemetryRequest(void)
         default:
             /* Increment the error counter upon receipt of an invalid command */
             GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_DEVICE_TLM_ERR_EID, CFE_EVS_EventType_ERROR, 
-                "GENERIC_FSS: Invalid command code for packet, MID = 0x%x, cmdCode = 0x%x", CFE_SB_MsgIdToValue(MsgId), CommandCode);
+            CFE_EVS_SendEvent(GENERIC_FSS_DEVICE_TLM_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: Invalid command code for packet, MID = 0x%x, cmdCode = 0x%x",
+                              CFE_SB_MsgIdToValue(MsgId), CommandCode);
             break;
     }
     return;
 }
 
-
-/* 
+/*
 ** Report Application Housekeeping
 */
 static void GENERIC_FSS_ReportHousekeeping(void)
 {
     /* Time stamp and publish housekeeping telemetry */
-    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt);
-    CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.HkTelemetryPkt, true);
+    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *)&GENERIC_FSS_AppData.HkTelemetryPkt);
+    CFE_SB_TransmitMsg((CFE_MSG_Message_t *)&GENERIC_FSS_AppData.HkTelemetryPkt, true);
     return;
 }
-
 
 /*
 ** Collect and Report Device Telemetry
@@ -389,25 +398,25 @@ static void GENERIC_FSS_ReportDeviceTelemetry(void)
     /* Check that device is enabled */
     if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
     {
-        status = GENERIC_FSS_RequestData(&GENERIC_FSS_AppData.Generic_fssSpi, (GENERIC_FSS_Device_Data_tlm_t*) &GENERIC_FSS_AppData.DevicePkt.Generic_fss);
+        status = GENERIC_FSS_RequestData(&GENERIC_FSS_AppData.Generic_fssSpi,
+                                         (GENERIC_FSS_Device_Data_tlm_t *)&GENERIC_FSS_AppData.DevicePkt.Generic_fss);
         if (status == OS_SUCCESS)
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
             /* Time stamp and publish data telemetry */
-            CFE_SB_TimeStampMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.DevicePkt);
-            CFE_SB_TransmitMsg((CFE_MSG_Message_t *) &GENERIC_FSS_AppData.DevicePkt, true);
+            CFE_SB_TimeStampMsg((CFE_MSG_Message_t *)&GENERIC_FSS_AppData.DevicePkt);
+            CFE_SB_TransmitMsg((CFE_MSG_Message_t *)&GENERIC_FSS_AppData.DevicePkt, true);
         }
         else
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_REQ_DATA_ERR_EID, CFE_EVS_EventType_ERROR, 
-                    "GENERIC_FSS: Request device data reported error %d", status);
+            CFE_EVS_SendEvent(GENERIC_FSS_REQ_DATA_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: Request device data reported error %d", status);
         }
     }
     /* Intentionally do not report errors if disabled */
     return;
 }
-
 
 /*
 ** Reset all global counter variables
@@ -415,27 +424,26 @@ static void GENERIC_FSS_ReportDeviceTelemetry(void)
 static void GENERIC_FSS_ResetCounters(void)
 {
     GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount = 0;
-    GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount = 0;
-    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount = 0;
-    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount = 0;
+    GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount      = 0;
+    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount  = 0;
+    GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount       = 0;
     return;
-} 
+}
 
 /*
 ** Verify command packet length matches expected
 */
-static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expected_length)
-{     
-    int32 status = OS_SUCCESS;
-    CFE_SB_MsgId_t msg_id = CFE_SB_INVALID_MSG_ID;
-    CFE_MSG_FcnCode_t cmd_code = 0;
-    size_t actual_length = 0;
+static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t *msg, uint16 expected_length)
+{
+    int32             status        = OS_SUCCESS;
+    CFE_SB_MsgId_t    msg_id        = CFE_SB_INVALID_MSG_ID;
+    CFE_MSG_FcnCode_t cmd_code      = 0;
+    size_t            actual_length = 0;
 
     CFE_MSG_GetSize(msg, &actual_length);
     if (expected_length == actual_length)
     {
         /* Increment the command counter upon receipt of a valid command */
-        GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
     }
     else
     {
@@ -443,8 +451,8 @@ static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expecte
         CFE_MSG_GetFcnCode(msg, &cmd_code);
 
         CFE_EVS_SendEvent(GENERIC_FSS_LEN_ERR_EID, CFE_EVS_EventType_ERROR,
-           "Invalid msg length: ID = 0x%X,  CC = %d, Len = %ld, Expected = %d",
-              CFE_SB_MsgIdToValue(msg_id), cmd_code, actual_length, expected_length);
+                          "Invalid msg length: ID = 0x%X,  CC = %d, Len = %ld, Expected = %d",
+                          CFE_SB_MsgIdToValue(msg_id), cmd_code, actual_length, expected_length);
 
         status = OS_ERROR;
 
@@ -452,7 +460,7 @@ static int32 GENERIC_FSS_VerifyCmdLength(CFE_MSG_Message_t * msg, uint16 expecte
         GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
     }
     return status;
-} 
+}
 
 /*
 ** Enable Component
@@ -464,21 +472,25 @@ static void GENERIC_FSS_Enable(void)
     /* Check that device is disabled */
     if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_DISABLED)
     {
+        /* Increment command success counter */
+        GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
+
         /*
         ** Initialize hardware interface data
-        */ 
-        GENERIC_FSS_AppData.Generic_fssSpi.deviceString = GENERIC_FSS_CFG_STRING;
-        GENERIC_FSS_AppData.Generic_fssSpi.handle = GENERIC_FSS_CFG_HANDLE;
-        GENERIC_FSS_AppData.Generic_fssSpi.baudrate = GENERIC_FSS_CFG_BAUD;
-        GENERIC_FSS_AppData.Generic_fssSpi.spi_mode = GENERIC_FSS_CFG_SPI_MODE;
+        */
+        GENERIC_FSS_AppData.Generic_fssSpi.deviceString  = GENERIC_FSS_CFG_STRING;
+        GENERIC_FSS_AppData.Generic_fssSpi.handle        = GENERIC_FSS_CFG_HANDLE;
+        GENERIC_FSS_AppData.Generic_fssSpi.baudrate      = GENERIC_FSS_CFG_BAUD;
+        GENERIC_FSS_AppData.Generic_fssSpi.spi_mode      = GENERIC_FSS_CFG_SPI_MODE;
         GENERIC_FSS_AppData.Generic_fssSpi.bits_per_word = GENERIC_FSS_CFG_BITS_PER_WORD;
-        GENERIC_FSS_AppData.Generic_fssSpi.bus = GENERIC_FSS_CFG_BUS;
-        GENERIC_FSS_AppData.Generic_fssSpi.cs = GENERIC_FSS_CFG_CS;
+        GENERIC_FSS_AppData.Generic_fssSpi.bus           = GENERIC_FSS_CFG_BUS;
+        GENERIC_FSS_AppData.Generic_fssSpi.cs            = GENERIC_FSS_CFG_CS;
 
         /* Open device specific protocols */
         status = spi_init_dev(&GENERIC_FSS_AppData.Generic_fssSpi);
         if (status == OS_SUCCESS)
         {
+
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_ENABLED;
             CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: Device enabled");
@@ -486,17 +498,18 @@ static void GENERIC_FSS_Enable(void)
         else
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_SPI_INIT_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: SPI device initialization error %d", status);
+            CFE_EVS_SendEvent(GENERIC_FSS_SPI_INIT_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: SPI device initialization error %d", status);
         }
     }
     else
     {
-        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: Device enable failed, already enabled");
+        GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
+        CFE_EVS_SendEvent(GENERIC_FSS_ENABLE_ERR_EID, CFE_EVS_EventType_ERROR,
+                          "GENERIC_FSS: Device enable failed, already enabled");
     }
     return;
 }
-
 
 /*
 ** Disable Component
@@ -508,24 +521,30 @@ static void GENERIC_FSS_Disable(void)
     /* Check that device is enabled */
     if (GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled == GENERIC_FSS_DEVICE_ENABLED)
     {
+        /* Increment command success counter */
+        GENERIC_FSS_AppData.HkTelemetryPkt.CommandCount++;
+
         /* Close device specific protocols */
         status = spi_close_device(&GENERIC_FSS_AppData.Generic_fssSpi);
         if (status == OS_SUCCESS)
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceCount++;
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
-            CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION, "GENERIC_FSS: Device disabled");
+            CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_INF_EID, CFE_EVS_EventType_INFORMATION,
+                              "GENERIC_FSS: Device disabled");
         }
         else
         {
             GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-            CFE_EVS_SendEvent(GENERIC_FSS_SPI_CLOSE_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: SPI device close error %d", status);
+            CFE_EVS_SendEvent(GENERIC_FSS_SPI_CLOSE_ERR_EID, CFE_EVS_EventType_ERROR,
+                              "GENERIC_FSS: SPI device close error %d", status);
         }
     }
     else
     {
-        GENERIC_FSS_AppData.HkTelemetryPkt.DeviceErrorCount++;
-        CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_ERR_EID, CFE_EVS_EventType_ERROR, "GENERIC_FSS: Device disable failed, already disabled");
+        GENERIC_FSS_AppData.HkTelemetryPkt.CommandErrorCount++;
+        CFE_EVS_SendEvent(GENERIC_FSS_DISABLE_ERR_EID, CFE_EVS_EventType_ERROR,
+                          "GENERIC_FSS: Device disable failed, already disabled");
     }
     return;
 }
