@@ -38,7 +38,7 @@ namespace Components {
     HkTelemetryPkt.CommandErrorCount = 0;
     HkTelemetryPkt.DeviceCount = 0;
     HkTelemetryPkt.DeviceErrorCount = 0;
-    HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_DISABLED;
+    HkTelemetryPkt.DeviceEnabled = GENERIC_FSS_DEVICE_ENABLED;
 
     /* Open device specific protocols */
     status = spi_init_dev(&FssSpi);
@@ -52,7 +52,7 @@ namespace Components {
         status = OS_ERROR;
     }
 
-    status = spi_close_device(&FssSpi);
+    // status = spi_close_device(&FssSpi);
 
   }
 
@@ -70,6 +70,34 @@ namespace Components {
   // ----------------------------------------------------------------------
   // Handler implementations for commands
   // ----------------------------------------------------------------------
+
+  void Generic_fss :: updateData_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
+  {
+    int32_t status = OS_SUCCESS;
+  
+    status = GENERIC_FSS_RequestData(&FssSpi, &FSSData);
+
+    if(status == OS_SUCCESS)
+    {
+      HkTelemetryPkt.DeviceCount++;
+      this->FSSout_out(0, FSSData.Alpha, FSSData.Beta, FSSData.ErrorCode);
+    }
+    else
+    {
+      HkTelemetryPkt.DeviceErrorCount++;
+    }
+  }
+
+  void Generic_fss :: updateTlm_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
+  {
+    this->tlmWrite_ALPHA(FSSData.Alpha);
+    this->tlmWrite_BETA(FSSData.Beta);
+    this->tlmWrite_ERRORCODE(FSSData.ErrorCode);
+    this->tlmWrite_CommandCount(HkTelemetryPkt.CommandCount);
+    this->tlmWrite_CommandErrorCount(HkTelemetryPkt.CommandErrorCount);
+    this->tlmWrite_DeviceCount(HkTelemetryPkt.DeviceCount);
+    this->tlmWrite_DeviceErrorCount(HkTelemetryPkt.DeviceErrorCount);
+  }
 
   void Generic_fss :: NOOP_cmdHandler(FwOpcodeType opCode, U32 cmdSeq){
     HkTelemetryPkt.CommandCount++;
