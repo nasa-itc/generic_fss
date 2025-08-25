@@ -22,7 +22,7 @@ namespace Nos3
     {
         boost::shared_ptr<Generic_fssDataPoint> dp;
         {
-            bip::scoped_lock<bip::interprocess_mutex> lock(_blackboard_data->mutex);
+            boost::shared_lock<boost::shared_mutex> lock(_blackboard_data->mutex);
             dp = boost::shared_ptr<Generic_fssDataPoint>(
                 new Generic_fssDataPoint(_blackboard_data->FSSValid, _blackboard_data->FSSSunAng[0], _blackboard_data->FSSSunAng[1]));
             // lock is released when scope ends
