@@ -22,13 +22,8 @@ namespace Nos3
     {
         boost::shared_ptr<Generic_fssDataPoint> dp;
         {
-            sim_logger->trace("GenericFssShmemDataProvider::get_data_point:  Locking...");
-            boost::shared_lock<boost::shared_mutex> lock(_blackboard_data->mutex);
-            sim_logger->trace("GenericFssShmemDataProvider::get_data_point:  Locked.");
             dp = boost::shared_ptr<Generic_fssDataPoint>(
                 new Generic_fssDataPoint(_blackboard_data->FSSValid, _blackboard_data->FSSSunAng[0], _blackboard_data->FSSSunAng[1]));
-            // lock is released when scope ends
-            sim_logger->trace("GenericFssShmemDataProvider::get_data_point:  Unlocking...");
         }
         sim_logger->debug("GenericFssShmemDataProvider::get_data_point: valid=%d, alpha=%f, beta=%f", 
             dp->get_generic_fss_valid(), dp->get_generic_fss_alpha(), dp->get_generic_fss_beta());
