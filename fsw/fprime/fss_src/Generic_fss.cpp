@@ -6,6 +6,7 @@
 
 #include "fss_src/Generic_fss.hpp"
 #include "FpConfig.hpp"
+#include <Fw/Log/LogString.hpp>
 
 
 namespace Components {
