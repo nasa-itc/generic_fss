@@ -5,7 +5,8 @@
 // ======================================================================
 
 #include "fss_src/Generic_fss.hpp"
-#include "FpConfig.hpp"
+// #include "FpConfig.hpp"
+#include "Fw/FPrimeBasicTypes.hpp"
 #include <Fw/Log/LogString.hpp>
 
 

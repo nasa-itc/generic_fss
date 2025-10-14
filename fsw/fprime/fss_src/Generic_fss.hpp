@@ -55,7 +55,7 @@ namespace Components {
       //! Destroy Generic_fss object
       ~Generic_fss();
 
-    PRIVATE:
+    private:
 
       // ----------------------------------------------------------------------
       // Handler implementations for commands
