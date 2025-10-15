@@ -73,7 +73,7 @@ namespace Components {
   // Handler implementations for commands
   // ----------------------------------------------------------------------
 
-  void Generic_fss :: updateData_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
+  void Generic_fss :: updateData_handler(const FwIndexType portNum, U32 context)
   {
     int32_t status = OS_SUCCESS;
   
@@ -90,7 +90,7 @@ namespace Components {
     }
   }
 
-  void Generic_fss :: updateTlm_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_TYPE context)
+  void Generic_fss :: updateTlm_handler(const FwIndexType portNum, U32 context)
   {
     this->tlmWrite_ALPHA(FSSData.Alpha);
     this->tlmWrite_BETA(FSSData.Beta);
