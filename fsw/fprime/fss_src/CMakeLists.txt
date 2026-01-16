@@ -7,17 +7,17 @@
 #
 ####
 #ITC Changes
-include_directories("../platform_inc") #platform_cfg.h
-include_directories("../../shared")
-include_directories("../../standalone/") #device_cfg.h
-include_directories("../../../../../fsw/apps/hwlib/fsw/public_inc")
-include_directories("../../../../../fsw/apps/hwlib/sim/inc")
+# include_directories("../platform_inc") #platform_cfg.h
+# include_directories("../../shared")
+# include_directories("../../standalone/") #device_cfg.h
+# include_directories("../../../../../fsw/apps/hwlib/fsw/public_inc")
+# include_directories("../../../../../fsw/apps/hwlib/sim/inc")
 
 set(SOURCE_FILES
   "${CMAKE_CURRENT_LIST_DIR}/Generic_fss.fpp"
   "${CMAKE_CURRENT_LIST_DIR}/Generic_fss.cpp"
-  "${CMAKE_CURRENT_LIST_DIR}/../../shared/generic_fss_device.c"
-  "${CMAKE_CURRENT_LIST_DIR}/../../../../../fsw/apps/hwlib/sim/src/nos_link.c"
+  # "${CMAKE_CURRENT_LIST_DIR}/../../shared/generic_fss_device.c"
+  # "${CMAKE_CURRENT_LIST_DIR}/../../../../../fsw/apps/hwlib/sim/src/nos_link.c"
 
 )
 
@@ -25,9 +25,25 @@ set(SOURCE_FILES
 # they might not be available when cmake tries to build this component.
 
  set(MOD_DEPS
+    Fw_Types
     ${ITC_Common_LIBRARIES}
     ${NOSENGINE_LIBRARIES}
 
  )
 
 register_fprime_module()
+
+target_sources(${FPRIME_CURRENT_MODULE} PRIVATE 
+  "${CMAKE_CURRENT_LIST_DIR}/../../shared/generic_fss_device.c"
+  "${CMAKE_CURRENT_LIST_DIR}/../../../../../fsw/apps/hwlib/sim/src/nos_link.c"
+)
+
+target_include_directories(${FPRIME_CURRENT_MODULE} PRIVATE
+  "../platform_inc"
+  "../../shared"
+  "../../standalone/"
+  "../../../../../fsw/apps/hwlib/fsw/public_inc"
+  "../../../../../fsw/apps/hwlib/sim/inc"
+)
+
+

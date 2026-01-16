@@ -55,7 +55,7 @@ namespace Components {
       //! Destroy Generic_fss object
       ~Generic_fss();
 
-    PRIVATE:
+    private:
 
       // ----------------------------------------------------------------------
       // Handler implementations for commands
@@ -89,6 +89,16 @@ namespace Components {
       void REQUEST_DATA_cmdHandler(
           FwOpcodeType opCode, //!< The opcode
           U32 cmdSeq //!< The command sequence number
+      ) override;
+
+      void updateData_handler(
+        const FwIndexType portNum, //!< The port number
+        U32 context //!< The call order
+      ) override;
+
+      void updateTlm_handler(
+        const FwIndexType portNum, //!< The port number
+        U32 context //!< The call order
       ) override;
 
       inline Generic_fss_ActiveState get_active_state(uint8_t DeviceEnabled);
