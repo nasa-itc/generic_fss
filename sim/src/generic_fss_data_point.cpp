@@ -48,14 +48,14 @@ namespace Nos3
             }
 
             /* Debug print */
-            sim_logger->trace("Generic_fssDataPoint::Generic_fssDataPoint:  Parsed valid = %s, sunang = %f %f", _generic_fss_valid?"True":"False", _generic_fss_alpha, _generic_fss_beta);
+            sim_logger->trace("Generic_fssDataPoint::do_parsing:  Parsed valid = %s, sunang = %f %f", _generic_fss_valid?"True":"False", _generic_fss_alpha, _generic_fss_beta);
 
             _not_parsed = false;
         } 
         catch(const std::exception& e) 
         {
             /* Report error */
-            sim_logger->error("Generic_fssDataPoint::Generic_fssDataPoint:  Parsing exception %s", e.what());
+            sim_logger->error("Generic_fssDataPoint::do_parsing:  Parsing exception %s", e.what());
         }
     }
 
